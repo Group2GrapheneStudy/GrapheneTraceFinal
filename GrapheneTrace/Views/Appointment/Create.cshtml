@@ -1,0 +1,49 @@
+﻿@{
+    ViewData["Title"] = "Create Appointment";
+}
+
+<h2 class="mb-3">Create Appointment</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label class="form-label">Patient</label>
+        <select class="form-select" name="patientId" required>
+            @foreach (var p in ViewBag.Patients)
+            {
+                <option value="@p.PatientId">@p.UserAccount.Email</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Clinician</label>
+        <select class="form-select" name="clinicianId" required>
+            @foreach (var c in ViewBag.Clinicians)
+            {
+                <option value="@c.ClinicianId">@c.UserAccount.Email</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Start Time</label>
+        <input class="form-control" type="datetime-local" name="start" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">End Time</label>
+        <input class="form-control" type="datetime-local" name="end" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" name="notes" rows="3"></textarea>
+    </div>
+
+    <button class="btn btn-primary">Create Appointment</button>
+</form>

@@ -1,0 +1,46 @@
+﻿@model List<GrapheneTrace.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Appointments";
+}
+
+<h2 class="mb-3">Appointments</h2>
+
+<a class="btn btn-primary mb-3" asp-action="Create">Create Appointment</a>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">No appointments found.</div>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Start</th>
+                <th>End</th>
+                <th>Patient</th>
+                <th>Clinician</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td>@a.StartTime.ToLocalTime().ToString("g")</td>
+                    <td>@a.EndTime.ToLocalTime().ToString("g")</td>
+                    <td>@a.Patient.UserAccount.Email</td>
+                    <td>@a.Clinician.UserAccount.Email</td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@a.AppointmentId">Edit</a>
+                        <form asp-action="Delete" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@a.AppointmentId" />
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

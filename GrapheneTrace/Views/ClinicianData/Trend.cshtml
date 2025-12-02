@@ -1,0 +1,117 @@
+﻿@model List<GrapheneTrace.Models.TrendPoint>
+
+@{
+    ViewData["Title"] = "Patient Pressure Trend";
+
+    var email = ViewBag.PatientEmail as string ?? "Unknown patient";
+    var pid = ViewBag.PatientId as int? ?? 0;
+}
+
+<h2 class="mb-3">Pressure Trend – @email (ID @pid)</h2>
+
+<a class="btn btn-outline-secondary mb-3" href="/ClinicianData/SelectPatient">
+    ← Back to patient list
+</a>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">
+        Not enough data to display a trend for this patient.
+    </div>
+}
+else
+{
+    var labels = Model
+        .Select(p => p.Timestamp.ToLocalTime().ToString("HH:mm:ss"))
+        .ToArray();
+
+    var peaks = Model
+        .Select(p => p.PeakPressure)
+        .ToArray();
+
+    var areas = Model
+        .Select(p => p.ContactArea)
+        .ToArray();
+
+    var labelsJson = System.Text.Json.JsonSerializer.Serialize(labels);
+    var peaksJson = System.Text.Json.JsonSerializer.Serialize(peaks);
+    var areasJson = System.Text.Json.JsonSerializer.Serialize(areas);
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Pressure Over Time (last 24h)</h5>
+            <canvas id="trendChart" style="max-height:400px;"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        (function () {
+            const labels = @Html.Raw(labelsJson);
+            const peaks = @Html.Raw(peaksJson);
+            const areas = @Html.Raw(areasJson);
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Peak Pressure',
+                            data: peaks,
+                            borderWidth: 2,
+                            tension: 0.25,
+                            fill: false
+                        },
+                        {
+                            label: 'Contact Area (%)',
+                            data: areas,
+                            borderWidth: 2,
+                            tension: 0.25,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Time' } },
+                        y: { title: { display: true, text: 'Value' } }
+                    }
+                }
+            });
+        })();
+    </script>
+
+    <h4 class="mt-4">Raw Data</h4>
+
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Peak Pressure</th>
+                <th>Contact Area %</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Timestamp.ToLocalTime().ToString("g")</td>
+                    <td>@p.PeakPressure</td>
+                    <td>@p.ContactArea.ToString("0.0")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

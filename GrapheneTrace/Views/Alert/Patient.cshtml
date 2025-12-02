@@ -1,0 +1,38 @@
+﻿@model List<GrapheneTrace.Models.Alert>
+
+@{
+    ViewData["Title"] = "My Alerts";
+}
+
+<h2 class="mb-3">My Alerts</h2>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">
+        You have no alerts.
+    </div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td>@a.TriggeredAt.ToLocalTime().ToString("g")</td>
+                    <td>@a.Severity</td>
+                    <td>@a.Status</td>
+                    <td>@a.Message</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

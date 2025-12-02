@@ -1,0 +1,50 @@
+﻿@model List<GrapheneTrace.Models.Alert>
+
+@{
+    ViewData["Title"] = "Patient Alerts";
+}
+
+<h2 class="mb-3">Patient Alerts</h2>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">
+        No alerts found.
+    </div>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Patient</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Message</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td>@a.TriggeredAt.ToLocalTime().ToString("g")</td>
+                    <td>@a.Patient.UserAccount.Email</td>
+                    <td>@a.Severity</td>
+                    <td>@a.Status</td>
+                    <td>@a.Message</td>
+                    <td>
+                        @if (a.Status != "Resolved")
+                        {
+                            <form asp-action="Resolve" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@a.AlertId" />
+                                <button class="btn btn-sm btn-success">Mark Resolved</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

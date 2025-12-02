@@ -1,0 +1,113 @@
+﻿@using GrapheneTrace.Helpers
+@inject IHttpContextAccessor Http
+
+@{
+    var role = Http.HttpContext?.Session.GetString(SessionKeys.UserRole);
+    var email = Http.HttpContext?.Session.GetString(SessionKeys.UserEmail);
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - GrapheneTrace</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #f7f9fc;
+        }
+
+        .nav-link.active {
+            font-weight: 600;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">GrapheneTrace</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav me-auto">
+                    @* ADMIN NAV *@
+                    @if (role == "Admin")
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Admin/Index">Admin Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Appointment/Index">Appointments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Alert/Clinician">Alerts</a>
+                        </li>
+                    }
+                    @* CLINICIAN NAV *@
+                    else if (role == "Clinician")
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Clinician/Index">Clinician Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Appointment/Index">Appointments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Alert/Clinician">Alerts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ClinicianFeedback/Index">Feedback</a>
+                        </li>
+                    }
+                    @* PATIENT NAV *@
+                    else if (role == "Patient")
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Patient/Index">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/PatientData/Heatmap">Heatmap</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/PatientData/Trend">Trend</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Feedback/Index">Feedback</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Alert/Patient">Alerts</a>
+                        </li>
+                    }
+                </ul>
+
+                <div class="d-flex">
+                    @if (!string.IsNullOrEmpty(email))
+                    {
+                        <span class="navbar-text text-white me-3">
+                            @email (@role)
+                        </span>
+                        <a class="btn btn-outline-light" href="/Account/Logout">Logout</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-light" href="/Account/Login">Login</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        @RenderBody()
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

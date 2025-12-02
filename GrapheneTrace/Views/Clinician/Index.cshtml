@@ -1,0 +1,72 @@
+﻿@model GrapheneTrace.ViewModels.ClinicianDashboardViewModel
+
+@{
+    ViewData["Title"] = "Clinician Dashboard";
+}
+
+<h1 class="mb-4">Clinician Dashboard</h1>
+
+<div class="mb-4">
+    <a class="btn btn-outline-danger" asp-controller="Alert" asp-action="Clinician">
+        View Patient Alerts
+    </a>
+</div>
+<div class="mb-3">
+    <a class="btn btn-outline-primary" asp-controller="ClinicianFeedback" asp-action="Index">
+        Review Patient Feedback
+    </a>
+</div>
+<div class="mb-3">
+    <a class="btn btn-outline-primary"
+       asp-controller="Appointment"
+       asp-action="Index">
+        Manage Appointments
+    </a>
+</div>
+
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6>Assigned Patients</h6>
+                <p class="display-6">@Model.AssignedPatientsCount</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6>Upcoming Appointments</h6>
+                <p class="display-6">@Model.UpcomingAppointmentsCount</p>
+                @if (Model.NextAppointmentAt.HasValue)
+                {
+                    <small class="text-muted">Next: @Model.NextAppointmentAt.Value.ToLocalTime()</small>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6>Unresolved Alerts</h6>
+                <p class="display-6">@Model.UnresolvedAlertsCount</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6>Feedback to Review</h6>
+                <p class="display-6">@Model.FeedbackToReviewCount</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p>Later we will add:</p>
+<ul>
+    <li>Quick links to patient risk overviews</li>
+    <li>Heatmap thumbnails for each patient</li>
+    <li>Recent alerts and feedback threads</li>
+</ul>

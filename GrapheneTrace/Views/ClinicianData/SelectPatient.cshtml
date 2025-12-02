@@ -1,0 +1,43 @@
+﻿@model List<GrapheneTrace.Models.Patient>
+
+@{
+    ViewData["Title"] = "Select Patient Trend";
+}
+
+<h2 class="mb-3">Select Patient to View Pressure Trend</h2>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">
+        No patients found.
+    </div>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>External Id</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.PatientId</td>
+                    <td>@p.UserAccount.Email</td>
+                    <td>@p.ExternalId</td>
+                    <td>
+                        <a class="btn btn-sm btn-primary"
+                           href="/ClinicianData/Trend?patientId=@p.PatientId">
+                            View Trend
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

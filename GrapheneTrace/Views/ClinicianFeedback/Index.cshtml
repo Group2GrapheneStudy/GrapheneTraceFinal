@@ -1,0 +1,73 @@
+﻿@model List<GrapheneTrace.Models.Feedback>
+
+@{
+    ViewData["Title"] = "Patient Feedback";
+    var clinicianName = ViewBag.ClinicianName as string ?? "";
+}
+
+<h2 class="mb-3">Patient Feedback</h2>
+
+<p class="text-muted">
+    Logged in as <strong>@clinicianName</strong>
+</p>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">
+        There is no feedback to review.
+    </div>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Rating</th>
+                <th>Comment</th>
+                <th>Your Reply</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var f in Model)
+            {
+                <tr>
+                    <td>@f.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td>@f.Patient.UserAccount.Email</td>
+                    <td>@(string.IsNullOrEmpty(f.Rating) ? "-" : f.Rating)</td>
+                    <td>@f.Comment</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(f.ClinicianReply))
+                        {
+                            <div>@f.ClinicianReply</div>
+                            <small class="text-muted">
+                                Replied at @f.ClinicianReplyAt?.ToLocalTime().ToString("g")
+                            </small>
+                        }
+                        else
+                        {
+                            <form asp-action="Reply" method="post" class="mt-2">
+                                <input type="hidden" name="feedbackId" value="@f.FeedbackId" />
+                                <div class="mb-2">
+                                    <textarea class="form-control" name="reply" rows="2" required
+                                  placeholder="Write a reply to the patient..."></textarea>
+                                </div>
+                                <button class="btn btn-sm btn-primary">Send Reply</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

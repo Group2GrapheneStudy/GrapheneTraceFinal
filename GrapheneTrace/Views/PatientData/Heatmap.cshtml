@@ -1,0 +1,111 @@
+﻿@model GrapheneTrace.Models.HeatmapResult
+
+@{
+    ViewData["Title"] = "Pressure Heatmap";
+}
+
+<h2 class="mb-3">Latest Pressure Heatmap</h2>
+
+@if (Model == null)
+{
+    <div class="alert alert-info">
+        No pressure data found yet. Ask your clinician to upload a CSV session.
+    </div>
+}
+else
+{
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Peak Pressure</h6>
+                    <p class="h4">@Model.PeakPressure</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Average Pressure</h6>
+                    <p class="h4">@Model.AveragePressure.ToString("0.0")</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Contact Area</h6>
+                    <p class="h4">@Model.ContactAreaPercent.ToString("0.0")%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Risk Score</h6>
+                    <p class="h4">@Model.RiskScore</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-muted">
+        Timestamp: @Model.Timestamp?.ToLocalTime().ToString("g")
+    </p>
+
+    <style>
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(32, 1fr);
+            max-width: 480px;
+            aspect-ratio: 32 / 32;
+            border: 1px solid #ccc;
+        }
+
+        .heat-cell {
+            width: 100%;
+            height: 100%;
+        }
+
+        .heat-zero {
+            background-color: #f8f9fa;
+        }
+
+        .heat-low {
+            background-color: #cce5ff;
+        }
+
+        .heat-med {
+            background-color: #66b2ff;
+        }
+
+        .heat-high {
+            background-color: #ff9933;
+        }
+
+        .heat-veryhigh {
+            background-color: #ff3333;
+        }
+    </style>
+
+    <div class="heatmap-grid mb-3">
+        @for (int r = 0; r < 32; r++)
+        {
+            for (int c = 0; c < 32; c++)
+            {
+                int v = Model.Values[r, c];
+                string cls = v < 10 ? "heat-zero"
+                : v < 50 ? "heat-low"
+                : v < 120 ? "heat-med"
+                : v < 200 ? "heat-high"
+                : "heat-veryhigh";
+
+                <div class="heat-cell @cls" title="@v"></div>
+            }
+        }
+    </div>
+
+    <p class="text-muted">
+        Each square represents one sensor. Blue = low pressure, orange/red = high pressure.
+    </p>
+}

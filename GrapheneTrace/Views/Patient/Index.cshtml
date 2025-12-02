@@ -1,0 +1,64 @@
+﻿@model GrapheneTrace.ViewModels.PatientDashboardViewModel
+
+@{
+    ViewData["Title"] = "Patient Dashboard";
+}
+
+<h1 class="mb-4">Welcome, @Model.PatientName</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6>Total Alerts</h6>
+                <p class="display-6">@Model.AlertCount</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6>Open Alerts</h6>
+                <p class="display-6">@Model.OpenAlertCount</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6>Feedback Submitted</h6>
+                <p class="display-6">@Model.FeedbackCount</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6>Upcoming Appointments</h6>
+                <p class="display-6">@Model.UpcomingAppointmentsCount</p>
+                @if (Model.NextAppointmentAt.HasValue)
+                {
+                    <small class="text-muted">Next: @Model.NextAppointmentAt.Value.ToLocalTime()</small>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Pressure Data</h5>
+                @if (Model.HasPressureData)
+                {
+                    <p>You have existing pressure sessions. (Heatmap and graphs will appear here.)</p>
+                }
+                else
+                {
+                    <p>No pressure data uploaded yet.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
