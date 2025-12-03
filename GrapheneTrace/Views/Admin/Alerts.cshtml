@@ -1,0 +1,27 @@
+﻿@model List<GrapheneTrace.Models.Alert>
+
+<h2 class="mb-3">All Alerts</h2>
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Patient</th>
+            <th>Severity</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Triggered At</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var a in Model)
+        {
+            <tr>
+                <td>@a.Patient.UserAccount.Email</td>
+                <td>@a.Severity</td>
+                <td>@a.AlertType</td>
+                <td>@a.Status</td>
+                <td>@a.TriggeredAt.ToLocalTime()</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -20,6 +20,9 @@ namespace GrapheneTrace.Data
         public DbSet<Prescription> Prescriptions => Set<Prescription>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+        public DbSet<Appointment> Appointment { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder model)
         {
             base.OnModelCreating(model);

@@ -1,0 +1,13 @@
+﻿@model GrapheneTrace.Models.HeatmapResult
+
+<h2>Heatmap - @ViewBag.PatientEmail</h2>
+
+@if (Model == null)
+{
+    <div class="alert alert-info">No heatmap available.</div>
+}
+else
+{
+    @* Reuse the same heatmap grid from PatientData/Heatmap *@
+    @await Html.PartialAsync("~/Views/PatientData/Heatmap.cshtml", Model)
+}

@@ -1,22 +1,13 @@
 ﻿@model GrapheneTrace.Models.Appointment
 
-@{
-    ViewData["Title"] = "Edit Appointment";
-}
+<h2 class="mb-4">Edit Appointment</h2>
 
-<h2 class="mb-3">Edit Appointment</h2>
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
-
-<form asp-action="Edit" method="post">
+<form method="post" class="card p-4 shadow-sm">
     <input type="hidden" name="appointmentId" value="@Model.AppointmentId" />
 
     <div class="mb-3">
-        <label class="form-label">Patient</label>
-        <select class="form-select" name="patientId" required>
+        <label>Patient</label>
+        <select class="form-select" name="patientId">
             @foreach (var p in ViewBag.Patients)
             {
                 <option value="@p.PatientId" @(p.PatientId == Model.PatientId ? "selected" : "")>
@@ -27,8 +18,8 @@
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Clinician</label>
-        <select class="form-select" name="clinicianId" required>
+        <label>Clinician</label>
+        <select class="form-select" name="clinicianId">
             @foreach (var c in ViewBag.Clinicians)
             {
                 <option value="@c.ClinicianId" @(c.ClinicianId == Model.ClinicianId ? "selected" : "")>
@@ -39,21 +30,18 @@
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Start Time</label>
-        <input class="form-control" type="datetime-local" name="start"
-               value="@Model.StartTime.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" required />
+        <label>Start Time</label>
+        <input class="form-control" type="datetime-local"
+               name="start"
+               value="@Model.StartTime.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
     </div>
 
     <div class="mb-3">
-        <label class="form-label">End Time</label>
-        <input class="form-control" type="datetime-local" name="end"
-               value="@Model.EndTime.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" required />
+        <label>End Time</label>
+        <input class="form-control" type="datetime-local"
+               name="end"
+               value="@Model.EndTime.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Notes</label>
-        <textarea class="form-control" name="notes" rows="3">@Model.Notes</textarea>
-    </div>
-
-    <button class="btn btn-primary">Save Changes</button>
+    <button class="btn btn-primary w-100">Save Changes</button>
 </form>

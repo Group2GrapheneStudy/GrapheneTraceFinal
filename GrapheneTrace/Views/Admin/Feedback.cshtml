@@ -1,0 +1,25 @@
+﻿@model List<GrapheneTrace.Models.Feedback>
+
+<h2 class="mb-3">Patient Feedback</h2>
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Patient</th>
+            <th>Comment</th>
+            <th>Rating</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var f in Model)
+        {
+            <tr>
+                <td>@f.Patient.UserAccount.Email</td>
+                <td>@f.Comment</td>
+                <td>@f.Rating</td>
+                <td>@f.CreatedAt.ToLocalTime()</td>
+            </tr>
+        }
+    </tbody>
+</table>

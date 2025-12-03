@@ -1,0 +1,63 @@
+﻿@model IEnumerable<GrapheneTrace.Models.Clinician>
+
+@{
+    ViewData["Title"] = "Clinicians";
+}
+
+<h2>Clinicians</h2>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table table-striped table-sm">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Specialty</th>
+            <th>Status</th>
+            <th>Toggle</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            var isActive = c.UserAccount?.IsActive ?? false;
+            <tr>
+                <td>@c.ClinicianId</td>
+                <td>@c.UserAccount?.Email</td>
+                <td>@c.Specialty</td>
+                <td>
+                    @if (isActive)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+                </td>
+                <td>
+                    <form asp-controller="Admin"
+                          asp-action="ToggleUserActive"
+                          method="post"
+                          class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@c.UserId" />
+                        <input type="hidden" name="returnTo" value="@Url.Action("Clinicians", "Admin")" />
+                        <button type="submit"
+                                class="btn btn-sm @(isActive ? "btn-warning" : "btn-success")">
+                            @(isActive ? "Deactivate" : "Activate")
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

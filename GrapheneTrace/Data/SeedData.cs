@@ -19,15 +19,16 @@ namespace GrapheneTrace.Data
 
         /// <summary>
         /// Entry point used from Program.cs:
-        /// SeedData.InitializeAsync(services).GetAwaiter().GetResult();
+        ///     await SeedData.InitializeAsync(app.Services);
         /// </summary>
         public static Task InitializeAsync(IServiceProvider services)
         {
             using var scope = services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            // Apply any pending migrations
-            context.Database.Migrate();
+            // Ensure database exists. We *do not* run Migrate() here to avoid
+            // PendingModelChanges warnings becoming runtime exceptions.
+            context.Database.EnsureCreated();
 
             // 1) Seed users + roles (only if none exist)
             SeedUsers(context);

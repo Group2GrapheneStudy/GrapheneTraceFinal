@@ -6,8 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GrapheneTrace.Controllers
 {
-    // Admin and Clinician can create/manage appointments
-    [RoleAuthorize("Admin", "Clinician")]
+    [RoleAuthorize("Admin", "Clinician", "Patient")]
     public class AppointmentController : Controller
     {
         private readonly AppDbContext _context;
@@ -17,82 +16,69 @@ namespace GrapheneTrace.Controllers
             _context = context;
         }
 
-        // -----------------------------------------------------
-        // LIST (Clinician/Admin)
-        // -----------------------------------------------------
+        // ----------------------------------------------------------
+        // VIEW ALL APPOINTMENTS FOR CURRENT USER
+        // ----------------------------------------------------------
         public async Task<IActionResult> Index()
         {
-            var role = HttpContext.Session.GetString(SessionKeys.UserRole);
             var userId = HttpContext.Session.GetInt32(SessionKeys.UserId);
+            var role = HttpContext.Session.GetString(SessionKeys.UserRole);
 
-            if (userId == null) return RedirectToAction("Login", "Account");
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
 
-            // If clinician, only show clinician’s appointments
-            if (role == "Clinician")
+            IQueryable<Appointment> query = _context.Appointments
+                .Include(a => a.Patient).ThenInclude(p => p.UserAccount)
+                .Include(a => a.Clinician).ThenInclude(c => c.UserAccount);
+
+            if (role == "Patient")
             {
-                var clinician = await _context.Clinicians
-                    .FirstOrDefaultAsync(c => c.UserId == userId.Value);
-
-                if (clinician == null) return RedirectToAction("Login", "Account");
-
-                var appts = await _context.Appointments
-                    .Include(a => a.Patient).ThenInclude(p => p.UserAccount)
-                    .Where(a => a.ClinicianId == clinician.ClinicianId)
-                    .OrderBy(a => a.StartTime)
-                    .ToListAsync();
-
-                return View(appts);
+                var patient = await _context.Patients.FirstAsync(p => p.UserId == userId);
+                query = query.Where(a => a.PatientId == patient.PatientId);
+            }
+            else if (role == "Clinician")
+            {
+                var clinician = await _context.Clinicians.FirstAsync(c => c.UserId == userId);
+                query = query.Where(a => a.ClinicianId == clinician.ClinicianId);
             }
 
-            // Admin sees all
-            var all = await _context.Appointments
-                .Include(a => a.Patient).ThenInclude(p => p.UserAccount)
-                .Include(a => a.Clinician).ThenInclude(c => c.UserAccount)
-                .OrderBy(a => a.StartTime)
-                .ToListAsync();
-
-            return View(all);
+            var list = await query.OrderBy(a => a.StartTime).ToListAsync();
+            ViewBag.Role = role;
+            return View(list);
         }
 
-        // -----------------------------------------------------
-        // CREATE GET
-        // -----------------------------------------------------
+        // ----------------------------------------------------------
+        // CREATE APPOINTMENT (ADMIN + CLINICIAN)
+        // ----------------------------------------------------------
+        [RoleAuthorize("Admin", "Clinician")]
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            ViewBag.Patients = await _context.Patients
-                .Include(p => p.UserAccount).ToListAsync();
-
-            ViewBag.Clinicians = await _context.Clinicians
-                .Include(c => c.UserAccount).ToListAsync();
-
+            ViewBag.Patients = await _context.Patients.Include(p => p.UserAccount).ToListAsync();
+            ViewBag.Clinicians = await _context.Clinicians.Include(c => c.UserAccount).ToListAsync();
             return View();
         }
 
-        // -----------------------------------------------------
-        // CREATE POST
-        // -----------------------------------------------------
+        [RoleAuthorize("Admin", "Clinician")]
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(int patientId, int clinicianId, DateTime start, DateTime end, string? notes)
+        public async Task<IActionResult> Create(int patientId, int clinicianId, DateTime start, DateTime end)
         {
-            if (end <= start)
+            if (start >= end)
             {
                 TempData["Error"] = "End time must be after start time.";
                 return RedirectToAction("Create");
             }
 
-            var userId = HttpContext.Session.GetInt32(SessionKeys.UserId) ?? 0;
+            var createdBy = HttpContext.Session.GetInt32(SessionKeys.UserId)!.Value;
 
             var appt = new Appointment
             {
                 PatientId = patientId,
                 ClinicianId = clinicianId,
-                CreatedByUserId = userId,
                 StartTime = start.ToUniversalTime(),
                 EndTime = end.ToUniversalTime(),
                 Status = "Scheduled",
-                Notes = notes
+                CreatedByUserId = createdBy
             };
 
             _context.Appointments.Add(appt);
@@ -101,9 +87,9 @@ namespace GrapheneTrace.Controllers
             return RedirectToAction("Index");
         }
 
-        // -----------------------------------------------------
-        // EDIT GET
-        // -----------------------------------------------------
+        // ----------------------------------------------------------
+        // EDIT APPOINTMENT (ALL ROLES)
+        // ----------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -112,7 +98,8 @@ namespace GrapheneTrace.Controllers
                 .Include(a => a.Clinician).ThenInclude(c => c.UserAccount)
                 .FirstOrDefaultAsync(a => a.AppointmentId == id);
 
-            if (appt == null) return NotFound();
+            if (appt == null)
+                return NotFound();
 
             ViewBag.Patients = await _context.Patients.Include(p => p.UserAccount).ToListAsync();
             ViewBag.Clinicians = await _context.Clinicians.Include(c => c.UserAccount).ToListAsync();
@@ -120,41 +107,33 @@ namespace GrapheneTrace.Controllers
             return View(appt);
         }
 
-        // -----------------------------------------------------
-        // EDIT POST
-        // -----------------------------------------------------
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int appointmentId, int patientId, int clinicianId, DateTime start, DateTime end, string? notes)
+        public async Task<IActionResult> Edit(int appointmentId, int patientId, int clinicianId, DateTime start, DateTime end)
         {
             var appt = await _context.Appointments.FindAsync(appointmentId);
-            if (appt == null) return NotFound();
 
-            if (end <= start)
-            {
-                TempData["Error"] = "Invalid time range.";
-                return RedirectToAction("Edit", new { id = appointmentId });
-            }
+            if (appt == null)
+                return NotFound();
 
             appt.PatientId = patientId;
             appt.ClinicianId = clinicianId;
             appt.StartTime = start.ToUniversalTime();
             appt.EndTime = end.ToUniversalTime();
-            appt.Notes = notes;
 
             await _context.SaveChangesAsync();
-
             return RedirectToAction("Index");
         }
 
-        // -----------------------------------------------------
-        // DELETE
-        // -----------------------------------------------------
+        // ----------------------------------------------------------
+        // DELETE APPOINTMENT (ALL ROLES)
+        // ----------------------------------------------------------
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
             var appt = await _context.Appointments.FindAsync(id);
-            if (appt == null) return NotFound();
+
+            if (appt == null)
+                return NotFound();
 
             _context.Appointments.Remove(appt);
             await _context.SaveChangesAsync();
