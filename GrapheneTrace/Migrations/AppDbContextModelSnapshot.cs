@@ -158,7 +158,7 @@ namespace GrapheneTrace.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("Appointment");
+                    b.ToTable("Appointments");
                 });
 
             modelBuilder.Entity("GrapheneTrace.Models.AuditLog", b =>

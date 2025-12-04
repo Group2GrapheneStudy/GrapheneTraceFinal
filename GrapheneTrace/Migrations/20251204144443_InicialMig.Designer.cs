@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GrapheneTrace.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251204093029_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251204144443_InicialMig")]
+    partial class InicialMig
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

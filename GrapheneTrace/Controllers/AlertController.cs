@@ -86,7 +86,7 @@ namespace GrapheneTrace.Controllers
 
                 return View(alerts);
             }
-            catch (Exception    ex)
+            catch (Exception ex)
             {
                 TempData["ErrorMessage"] =
                     "There was a problem loading alerts. Please contact the system administrator.";
@@ -137,37 +137,5 @@ namespace GrapheneTrace.Controllers
 
             return RedirectToAction("Clinician");
         }
-
-        //DELETE DEBUG ACTIONS - REMOVE FOR PRODUCTION
-
-        [HttpGet]
-        public async Task<IActionResult> DebugDb()
-        {
-            // What database is EF actually connected to?
-            var conn = _context.Database.GetDbConnection();
-            var dbName = conn.Database;
-
-            // How many alerts does EF see RIGHT NOW?
-            var alertCount = await _context.Alerts.CountAsync();
-
-            return Content($"DB: {dbName}, Alerts: {alertCount}");
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> DeleteAllAlertsDebug()
-        {
-            // Load all alerts EF can see
-            var allAlerts = await _context.Alerts.ToListAsync();
-
-            // Remove them
-            _context.Alerts.RemoveRange(allAlerts);
-            await _context.SaveChangesAsync();
-
-            // Confirm how many are left
-            var remaining = await _context.Alerts.CountAsync();
-
-            return Content($"Deleted alerts. Remaining: {remaining}");
-        }
-
     }
 }
