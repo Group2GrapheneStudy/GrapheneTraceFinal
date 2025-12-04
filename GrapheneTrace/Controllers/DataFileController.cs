@@ -110,9 +110,14 @@ namespace GrapheneTrace.Controllers
 
         // -------------------------------------------------
         // Helper: read CSV and generate PressureFrame rows
+        //         + create alerts for high peak pressure
         // -------------------------------------------------
         private async Task ProcessCsvAsync(DataFile file)
         {
+            // Temporarily keep this super low so you can SEE alerts.
+            // After you confirm it's working, set it to something sensible.
+            const decimal PeakPressureAlertThreshold = 120m;
+
             string[] lines = await System.IO.File.ReadAllLinesAsync(file.FilePath);
 
             if (lines.Length % 32 != 0)
@@ -122,6 +127,7 @@ namespace GrapheneTrace.Controllers
             var baseTime = DateTime.UtcNow;
             var frames = new List<PressureFrame>();
 
+            // 1) Build PressureFrame objects from the CSV
             for (int i = 0; i < frameCount; i++)
             {
                 int[,] matrix = new int[32, 32];
@@ -153,8 +159,39 @@ namespace GrapheneTrace.Controllers
                 });
             }
 
+            // 2) Save frames so they get FrameId values
             _context.PressureFrames.AddRange(frames);
             await _context.SaveChangesAsync();
+
+            // 3) Create alerts for frames above the threshold
+            var alerts = new List<Alert>();
+
+            foreach (var frame in frames)
+            {
+                if (frame.PeakPressure > PeakPressureAlertThreshold)
+                {
+                    alerts.Add(new Alert
+                    {
+                        PatientId = file.PatientId,
+                        FrameId = frame.FrameId,
+                        TriggeredAt = frame.CapturedAtUtc,
+                        Status = "Open",
+                        Severity = "High",
+                        Message = $"Peak pressure {frame.PeakPressure} exceeded threshold {PeakPressureAlertThreshold}.",
+                        RaisedByUserId = file.UploadedByUserId
+                    });
+                }
+            }
+
+            if (alerts.Any())
+            {
+                _context.Alerts.AddRange(alerts);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
+
+
+
+

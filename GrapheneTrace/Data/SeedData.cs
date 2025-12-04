@@ -15,7 +15,9 @@ namespace GrapheneTrace.Data
     {
         // Change this path if your CSVs live somewhere else
         private static readonly string CsvSourceFolder =
-            @"C:\Users\faiza\Downloads\GTLB-Data (1)\GTLB-Data";
+
+            @"C:\Users\tomas\source\repos\Group2GrapheneStudy\GrapheneTraceFinal\csv_files";
+        //@"C:\Users\faiza\Downloads\GTLB-Data (1)\GTLB-Data";
 
         /// <summary>
         /// Entry point used from Program.cs:
@@ -152,7 +154,7 @@ namespace GrapheneTrace.Data
         }
 
         // -----------------------------
-        // CSV → DATAFILES / FRAMES
+        // CSV → DATAFILES / FRAMES / ALERTS (SEEDED)
         // -----------------------------
         private static void SeedCsvSessions(AppDbContext context)
         {
@@ -178,6 +180,10 @@ namespace GrapheneTrace.Data
 
             if (adminUserId == 0)
                 return;
+
+            // ALERT threshold for seeded data.
+            // Start low (0) to prove it works, then increase once you're happy.
+            const decimal PeakPressureAlertThreshold = 320m;
 
             // Simple analysis helpers inline (similar to PressureAnalysisService)
             decimal CalcPeak(int[,] matrix)
@@ -246,6 +252,8 @@ namespace GrapheneTrace.Data
                 int frameCount = lines.Length / 32;
                 var baseTime = now;
 
+                var frames = new List<PressureFrame>();
+
                 for (int i = 0; i < frameCount; i++)
                 {
                     int[,] matrix = new int[32, 32];
@@ -265,7 +273,8 @@ namespace GrapheneTrace.Data
                     var area = CalcArea(matrix);
                     var risk = CalcRisk(peak, area);
 
-                    context.PressureFrames.Add(new PressureFrame
+                    // Build frame entity and keep it in a list
+                    frames.Add(new PressureFrame
                     {
                         DataFileId = dataFile.DataFileId,
                         FrameIndex = i,
@@ -277,8 +286,37 @@ namespace GrapheneTrace.Data
                     });
                 }
 
+                // Save all frames so EF populates FrameId values
+                context.PressureFrames.AddRange(frames);
                 context.SaveChanges();
+
+                // Now create alerts for frames above the threshold
+                var alerts = new List<Alert>();
+
+                foreach (var frame in frames)
+                {
+                    if (frame.PeakPressure > PeakPressureAlertThreshold)
+                    {
+                        alerts.Add(new Alert
+                        {
+                            PatientId = patient.PatientId,
+                            FrameId = frame.FrameId,
+                            TriggeredAt = frame.CapturedAtUtc,
+                            Status = "Open",
+                            Severity = "High",
+                            Message = $"Seeded alert: peak pressure {frame.PeakPressure} exceeded threshold {PeakPressureAlertThreshold}.",
+                            RaisedByUserId = adminUserId
+                        });
+                    }
+                }
+
+                if (alerts.Count > 0)
+                {
+                    context.Alerts.AddRange(alerts);
+                    context.SaveChanges();
+                }
             }
         }
     }
 }
+
