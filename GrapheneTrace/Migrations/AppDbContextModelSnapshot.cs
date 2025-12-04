@@ -299,9 +299,8 @@ namespace GrapheneTrace.Migrations
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Rating")
-                        .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
+                    b.Property<int?>("Rating")
+                        .HasColumnType("int");
 
                     b.Property<bool>("VisibleToClinician")
                         .HasColumnType("bit");
@@ -498,8 +497,7 @@ namespace GrapheneTrace.Migrations
 
                     b.HasOne("GrapheneTrace.Models.PressureFrame", null)
                         .WithMany("Alerts")
-                        .HasForeignKey("PressureFrameFrameId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("PressureFrameFrameId");
 
                     b.HasOne("GrapheneTrace.Models.UserAccount", "RaisedByUser")
                         .WithMany()
@@ -514,13 +512,11 @@ namespace GrapheneTrace.Migrations
 
                     b.HasOne("GrapheneTrace.Models.UserAccount", null)
                         .WithMany("AlertsRaised")
-                        .HasForeignKey("UserAccountUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("UserAccountUserId");
 
                     b.HasOne("GrapheneTrace.Models.UserAccount", null)
                         .WithMany("AlertsResolved")
-                        .HasForeignKey("UserAccountUserId1")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("UserAccountUserId1");
 
                     b.Navigation("Frame");
 
@@ -536,19 +532,19 @@ namespace GrapheneTrace.Migrations
                     b.HasOne("GrapheneTrace.Models.Clinician", "Clinician")
                         .WithMany("Appointments")
                         .HasForeignKey("ClinicianId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GrapheneTrace.Models.UserAccount", "CreatedByUser")
                         .WithMany("CreatedAppointments")
                         .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GrapheneTrace.Models.Patient", "Patient")
                         .WithMany("Appointments")
                         .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Clinician");
@@ -563,7 +559,7 @@ namespace GrapheneTrace.Migrations
                     b.HasOne("GrapheneTrace.Models.UserAccount", "UserAccount")
                         .WithMany("AuditLogs")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("UserAccount");
@@ -591,7 +587,7 @@ namespace GrapheneTrace.Migrations
                     b.HasOne("GrapheneTrace.Models.UserAccount", "UploadedByUser")
                         .WithMany("UploadedDataFiles")
                         .HasForeignKey("UploadedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Patient");
@@ -603,18 +599,16 @@ namespace GrapheneTrace.Migrations
                 {
                     b.HasOne("GrapheneTrace.Models.Clinician", "Clinician")
                         .WithMany("Feedbacks")
-                        .HasForeignKey("ClinicianId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("ClinicianId");
 
                     b.HasOne("GrapheneTrace.Models.DataFile", "DataFile")
                         .WithMany("Feedbacks")
-                        .HasForeignKey("DataFileId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("DataFileId");
 
                     b.HasOne("GrapheneTrace.Models.Patient", "Patient")
                         .WithMany("Feedbacks")
                         .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Clinician");
@@ -640,19 +634,19 @@ namespace GrapheneTrace.Migrations
                     b.HasOne("GrapheneTrace.Models.Clinician", "Clinician")
                         .WithMany("Prescriptions")
                         .HasForeignKey("ClinicianId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GrapheneTrace.Models.UserAccount", "CreatedByUser")
                         .WithMany("CreatedPrescriptions")
                         .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GrapheneTrace.Models.Patient", "Patient")
                         .WithMany("Prescriptions")
                         .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Clinician");

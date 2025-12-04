@@ -9,44 +9,46 @@ namespace GrapheneTrace.Models
         [Key]
         public int FeedbackId { get; set; }
 
+        // -------------------------
+        // PATIENT RELATION
+        // -------------------------
         [ForeignKey(nameof(Patient))]
         public int PatientId { get; set; }
-
         public Patient Patient { get; set; } = null!;
 
-        /// <summary>
-        /// The clinician this feedback is addressed to (if any).
-        /// </summary>
+        // -------------------------
+        // CLINICIAN RELATION (OPTIONAL)
+        // -------------------------
         [ForeignKey(nameof(Clinician))]
         public int? ClinicianId { get; set; }
-
         public Clinician? Clinician { get; set; }
 
-        /// <summary>
-        /// Optional link to a specific data file / session.
-        /// </summary>
+        // -------------------------
+        // DATA FILE / SESSION (OPTIONAL)
+        // -------------------------
         [ForeignKey(nameof(DataFile))]
         public int? DataFileId { get; set; }
-
         public DataFile? DataFile { get; set; }
 
-        [MaxLength(5)]
-        public string? Rating { get; set; }  // e.g. "1-5"
+        // -------------------------
+        // RATING & COMMENT
+        // Rating is optional → int?
+        // NULL = no rating given
+        // 1–5 = valid rating
+        // -------------------------
+        public int? Rating { get; set; }
 
         [Required]
         [MaxLength(2000)]
-        public string Comment { get; set; } = null!;
+        public string Comment { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        /// <summary>
-        /// Whether this feedback is visible to the clinician.
-        /// </summary>
+        // -------------------------
+        // VISIBILITY / REPLY
+        // -------------------------
         public bool VisibleToClinician { get; set; } = true;
 
-        /// <summary>
-        /// Clinician's reply, if any.
-        /// </summary>
         [MaxLength(2000)]
         public string? ClinicianReply { get; set; }
 

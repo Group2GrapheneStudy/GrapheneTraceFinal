@@ -24,10 +24,18 @@
     <div class="card-body">
         <h5 class="card-title">Leave New Feedback</h5>
 
-        <form asp-action="Create" method="post">
+        <!-- Explicit action so form always posts to /Feedback/Create -->
+        <form action="@Url.Action("Create", "Feedback")" method="post">
+            @Html.AntiForgeryToken()
+
             <div class="mb-3">
                 <label class="form-label">Rating (optional, 1–5)</label>
-                <input class="form-control" name="rating" placeholder="e.g. 4" />
+                <input class="form-control"
+                       name="rating"
+                       type="number"
+                       min="1"
+                       max="5"
+                       placeholder="e.g. 4" />
             </div>
 
             <div class="mb-3">
@@ -35,7 +43,8 @@
                 <textarea class="form-control" name="comment" rows="3" required></textarea>
             </div>
 
-            @* In future you can expose DataFile selection here if needed *@
+            @* DataFileId is optional – keep hidden for now *@
+            <input type="hidden" name="dataFileId" value="" />
 
             <button class="btn btn-primary">Submit Feedback</button>
         </form>
@@ -66,10 +75,12 @@ else
             {
                 <tr>
                     <td>@f.CreatedAt.ToLocalTime().ToString("g")</td>
-                    <td>@(string.IsNullOrEmpty(f.Rating) ? "-" : f.Rating)</td>
+
+                    <td>@(f.Rating <= 0 ? "-" : f.Rating.ToString())</td>
+
                     <td>@f.Comment</td>
                     <td>
-                        @if (!string.IsNullOrEmpty(f.ClinicianReply))
+                        @if (!string.IsNullOrWhiteSpace(f.ClinicianReply))
                         {
                             <div>@f.ClinicianReply</div>
                             <small class="text-muted">

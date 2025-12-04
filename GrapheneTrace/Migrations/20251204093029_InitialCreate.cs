@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GrapheneTrace.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialRebuild : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -69,7 +69,7 @@ namespace GrapheneTrace.Migrations
                         column: x => x.UserId,
                         principalTable: "UserAccounts",
                         principalColumn: "UserId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -141,19 +141,19 @@ namespace GrapheneTrace.Migrations
                         column: x => x.ClinicianId,
                         principalTable: "Clinicians",
                         principalColumn: "ClinicianId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Appointments_Patients_PatientId",
                         column: x => x.PatientId,
                         principalTable: "Patients",
                         principalColumn: "PatientId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Appointments_UserAccounts_CreatedByUserId",
                         column: x => x.CreatedByUserId,
                         principalTable: "UserAccounts",
                         principalColumn: "UserId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -183,7 +183,7 @@ namespace GrapheneTrace.Migrations
                         column: x => x.UploadedByUserId,
                         principalTable: "UserAccounts",
                         principalColumn: "UserId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -208,19 +208,19 @@ namespace GrapheneTrace.Migrations
                         column: x => x.ClinicianId,
                         principalTable: "Clinicians",
                         principalColumn: "ClinicianId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Prescriptions_Patients_PatientId",
                         column: x => x.PatientId,
                         principalTable: "Patients",
                         principalColumn: "PatientId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Prescriptions_UserAccounts_CreatedByUserId",
                         column: x => x.CreatedByUserId,
                         principalTable: "UserAccounts",
                         principalColumn: "UserId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -232,7 +232,7 @@ namespace GrapheneTrace.Migrations
                     PatientId = table.Column<int>(type: "int", nullable: false),
                     ClinicianId = table.Column<int>(type: "int", nullable: true),
                     DataFileId = table.Column<int>(type: "int", nullable: true),
-                    Rating = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: true),
+                    Rating = table.Column<int>(type: "int", nullable: true),
                     Comment = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     VisibleToClinician = table.Column<bool>(type: "bit", nullable: false),
@@ -246,20 +246,18 @@ namespace GrapheneTrace.Migrations
                         name: "FK_Feedbacks_Clinicians_ClinicianId",
                         column: x => x.ClinicianId,
                         principalTable: "Clinicians",
-                        principalColumn: "ClinicianId",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "ClinicianId");
                     table.ForeignKey(
                         name: "FK_Feedbacks_DataFiles_DataFileId",
                         column: x => x.DataFileId,
                         principalTable: "DataFiles",
-                        principalColumn: "DataFileId",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "DataFileId");
                     table.ForeignKey(
                         name: "FK_Feedbacks_Patients_PatientId",
                         column: x => x.PatientId,
                         principalTable: "Patients",
                         principalColumn: "PatientId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -326,8 +324,7 @@ namespace GrapheneTrace.Migrations
                         name: "FK_Alerts_PressureFrames_PressureFrameFrameId",
                         column: x => x.PressureFrameFrameId,
                         principalTable: "PressureFrames",
-                        principalColumn: "FrameId",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "FrameId");
                     table.ForeignKey(
                         name: "FK_Alerts_UserAccounts_RaisedByUserId",
                         column: x => x.RaisedByUserId,
@@ -344,14 +341,12 @@ namespace GrapheneTrace.Migrations
                         name: "FK_Alerts_UserAccounts_UserAccountUserId",
                         column: x => x.UserAccountUserId,
                         principalTable: "UserAccounts",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "UserId");
                     table.ForeignKey(
                         name: "FK_Alerts_UserAccounts_UserAccountUserId1",
                         column: x => x.UserAccountUserId1,
                         principalTable: "UserAccounts",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "UserId");
                 });
 
             migrationBuilder.CreateIndex(

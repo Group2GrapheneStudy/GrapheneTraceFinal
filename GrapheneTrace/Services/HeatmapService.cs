@@ -1,4 +1,8 @@
-﻿using GrapheneTrace.Data;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using GrapheneTrace.Data;
 using GrapheneTrace.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +19,10 @@ namespace GrapheneTrace.Services
             _analysis = analysis;
         }
 
+        /// <summary>
+        /// Returns the latest heatmap for a given patient based on the most recent
+        /// DataFile + PressureFrame.
+        /// </summary>
         public async Task<HeatmapResult?> GetLatestHeatmapAsync(int patientId)
         {
             var latestFile = await _context.DataFiles
@@ -22,37 +30,49 @@ namespace GrapheneTrace.Services
                 .OrderByDescending(df => df.UploadedAt)
                 .FirstOrDefaultAsync();
 
-            if (latestFile == null) return null;
+            if (latestFile == null)
+                return null;
 
             var latestFrame = await _context.PressureFrames
+                .Include(f => f.DataFile)          // ensure DataFile is loaded
                 .Where(f => f.DataFileId == latestFile.DataFileId)
                 .OrderByDescending(f => f.CapturedAtUtc)
                 .FirstOrDefaultAsync();
 
-            if (latestFrame == null) return null;
+            if (latestFrame == null)
+                return null;
 
             return await BuildHeatmapFromFrameAsync(latestFrame);
         }
 
+        /// <summary>
+        /// Returns a heatmap for a specific frame.
+        /// </summary>
         public async Task<HeatmapResult?> GetHeatmapForFrameAsync(int frameId)
         {
             var frame = await _context.PressureFrames
                 .Include(f => f.DataFile)
                 .FirstOrDefaultAsync(f => f.FrameId == frameId);
 
-            if (frame == null) return null;
+            if (frame == null)
+                return null;
 
             return await BuildHeatmapFromFrameAsync(frame);
         }
 
+        /// <summary>
+        /// Core worker: load the 32x32 matrix for a frame, compute metrics,
+        /// optionally raise an alert, and return HeatmapResult.
+        /// </summary>
         private async Task<HeatmapResult> BuildHeatmapFromFrameAsync(PressureFrame frame)
         {
-            string path = frame.DataFile.FilePath;
+            if (frame.DataFile == null)
+                throw new InvalidOperationException("PressureFrame.DataFile must be included.");
 
-            if (!File.Exists(path))
-            {
+            var path = frame.DataFile.FilePath;
+
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
                 throw new FileNotFoundException($"CSV file not found: {path}");
-            }
 
             int[,] matrix = await LoadMatrixForFrameAsync(path, frame.FrameIndex);
 
@@ -60,6 +80,30 @@ namespace GrapheneTrace.Services
             var avg = _analysis.CalculateAveragePressure(matrix);
             var contact = _analysis.CalculateContactAreaPercent(matrix);
             var risk = _analysis.CalculateRiskScore(peak, contact);
+
+            // ============================
+            // AUTO ALERT GENERATION
+            // ============================
+            // You can tweak this threshold if needed.
+            const int highPressureThreshold = 180;
+
+            if (peak > highPressureThreshold)
+            {
+                var alert = new Alert
+                {
+                    PatientId = frame.DataFile.PatientId,
+                    FrameId = frame.FrameId,
+                    AlertType = "High Pressure Detected",
+                    Severity = peak > 220 ? "Critical" : "High",
+                    Message = $"High pressure region detected (Peak={peak}).",
+                    RaisedByUserId = frame.DataFile.UploadedByUserId,
+                    TriggeredAt = DateTime.UtcNow,
+                    Status = "Unresolved"
+                };
+
+                _context.Alerts.Add(alert);
+                await _context.SaveChangesAsync();
+            }
 
             return new HeatmapResult
             {
@@ -72,13 +116,15 @@ namespace GrapheneTrace.Services
             };
         }
 
-        // Reads only the 32x32 block for a given frameIndex
+        /// <summary>
+        /// Reads only the 32x32 block for a given frameIndex from the CSV.
+        /// </summary>
         private async Task<int[,]> LoadMatrixForFrameAsync(string filePath, int frameIndex)
         {
             var lines = await File.ReadAllLinesAsync(filePath);
 
-            int rowsPerFrame = 32;
-            int cols = 32;
+            const int rowsPerFrame = 32;
+            const int cols = 32;
 
             int startRow = frameIndex * rowsPerFrame;
 

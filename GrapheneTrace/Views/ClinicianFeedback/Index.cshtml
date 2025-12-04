@@ -44,10 +44,13 @@ else
                 <tr>
                     <td>@f.CreatedAt.ToLocalTime().ToString("g")</td>
                     <td>@f.Patient.UserAccount.Email</td>
-                    <td>@(string.IsNullOrEmpty(f.Rating) ? "-" : f.Rating)</td>
+
+                    <!-- Rating is now an int; 0 = no rating -->
+                    <td>@(f.Rating <= 0 ? "-" : f.Rating.ToString())</td>
+
                     <td>@f.Comment</td>
                     <td>
-                        @if (!string.IsNullOrEmpty(f.ClinicianReply))
+                        @if (!string.IsNullOrWhiteSpace(f.ClinicianReply))
                         {
                             <div>@f.ClinicianReply</div>
                             <small class="text-muted">
@@ -59,7 +62,10 @@ else
                             <form asp-action="Reply" method="post" class="mt-2">
                                 <input type="hidden" name="feedbackId" value="@f.FeedbackId" />
                                 <div class="mb-2">
-                                    <textarea class="form-control" name="reply" rows="2" required
+                                    <textarea class="form-control"
+                                  name="reply"
+                                  rows="2"
+                                  required
                                   placeholder="Write a reply to the patient..."></textarea>
                                 </div>
                                 <button class="btn btn-sm btn-primary">Send Reply</button>
