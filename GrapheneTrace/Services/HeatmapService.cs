@@ -42,7 +42,8 @@ namespace GrapheneTrace.Services
             if (latestFrame == null)
                 return null;
 
-            return await BuildHeatmapFromFrameAsync(latestFrame);
+            // ✅ Alerts allowed here (if you still want them when asking for "latest")
+            return await BuildHeatmapFromFrameAsync(latestFrame, generateAlert: true);
         }
 
         /// <summary>
@@ -57,14 +58,15 @@ namespace GrapheneTrace.Services
             if (frame == null)
                 return null;
 
-            return await BuildHeatmapFromFrameAsync(frame);
+            // ✅ NO alerts when called by the slider
+            return await BuildHeatmapFromFrameAsync(frame, generateAlert: false);
         }
 
         /// <summary>
         /// Core worker: load the 32x32 matrix for a frame, compute metrics,
         /// optionally raise an alert, and return HeatmapResult.
         /// </summary>
-        private async Task<HeatmapResult> BuildHeatmapFromFrameAsync(PressureFrame frame)
+        private async Task<HeatmapResult> BuildHeatmapFromFrameAsync(PressureFrame frame, bool generateAlert)
         {
             if (frame.DataFile == null)
                 throw new InvalidOperationException("PressureFrame.DataFile must be included.");
@@ -84,10 +86,9 @@ namespace GrapheneTrace.Services
             // ============================
             // AUTO ALERT GENERATION
             // ============================
-            // You can tweak this threshold if needed.
             const int highPressureThreshold = 180;
 
-            if (peak > highPressureThreshold)
+            if (generateAlert && peak > highPressureThreshold)
             {
                 var alert = new Alert
                 {

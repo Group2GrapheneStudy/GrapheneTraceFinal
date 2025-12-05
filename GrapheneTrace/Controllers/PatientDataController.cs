@@ -25,27 +25,6 @@ namespace GrapheneTrace.Controllers
         }
 
         // -------------------------
-        // HEATMAP VIEW
-        // -------------------------
-        public async Task<IActionResult> Heatmap()
-        {
-            var userId = HttpContext.Session.GetInt32(SessionKeys.UserId);
-            if (userId == null)
-                return RedirectToAction("Login", "Account");
-
-            var patient = await _context.Patients
-                .FirstOrDefaultAsync(p => p.UserId == userId.Value);
-
-            if (patient == null)
-                return RedirectToAction("Login", "Account");
-
-            var result = await _heatmaps.GetLatestHeatmapAsync(patient.PatientId);
-
-            // result can be null; the view should handle a "no data" state
-            return View(result);
-        }
-
-        // -------------------------
         // TREND VIEW
         // -------------------------
         public async Task<IActionResult> Trend()
@@ -69,5 +48,62 @@ namespace GrapheneTrace.Controllers
 
             return View(points);
         }
+
+        // -------------------------
+        // HEATMAP VIEW
+        // -------------------------
+        public async Task<IActionResult> Heatmap()
+        {
+            var userId = HttpContext.Session.GetInt32(SessionKeys.UserId);
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
+
+            var patient = await _context.Patients
+                .FirstOrDefaultAsync(p => p.UserId == userId.Value);
+
+            if (patient == null)
+                return RedirectToAction("Login", "Account");
+
+            var latestFile = await _context.DataFiles
+                .Where(df => df.PatientId == patient.PatientId)
+                .OrderByDescending(df => df.UploadedAt)
+                .FirstOrDefaultAsync();
+
+            var vm = new HeatmapPlayerVm
+            {
+                PatientId = patient.PatientId,
+                Frames = new List<HeatmapFrameVm>()
+            };
+
+            if (latestFile != null)
+            {
+                vm.Frames = await _context.PressureFrames
+                    .Where(f => f.DataFileId == latestFile.DataFileId)
+                    .OrderBy(f => f.FrameIndex)
+                    .Select(f => new HeatmapFrameVm
+                    {
+                        FrameId = f.FrameId,
+                        FrameIndex = f.FrameIndex,
+                        CapturedAtUtc = f.CapturedAtUtc
+                    })
+                    .ToListAsync();
+            }
+
+            return View(vm);
+        }
+
+        public class HeatmapFrameVm
+        {
+            public int FrameId { get; set; }
+            public int FrameIndex { get; set; }
+            public DateTime CapturedAtUtc { get; set; }
+        }
+
+        public class HeatmapPlayerVm
+        {
+            public int PatientId { get; set; }
+            public List<HeatmapFrameVm> Frames { get; set; } = new();
+        }
+
     }
 }

@@ -48,7 +48,7 @@ namespace GrapheneTrace.Services
                     .AsNoTracking()
                     .Where(f => dataFileIds.Contains(f.DataFileId))
                     .OrderByDescending(f => f.CapturedAtUtc)
-                    .Take(2000)
+                    //.Take(2000)
                     .OrderBy(f => f.CapturedAtUtc) // re-order ascending after Take
                     .ToListAsync();
 

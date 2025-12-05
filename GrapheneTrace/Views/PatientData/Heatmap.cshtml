@@ -1,111 +1,274 @@
-﻿@model GrapheneTrace.Models.HeatmapResult
+﻿@using System.Text.Json
+@model GrapheneTrace.Controllers.PatientDataController.HeatmapPlayerVm
 
 @{
     ViewData["Title"] = "Pressure Heatmap";
+    var framesJson = JsonSerializer.Serialize(
+        Model.Frames.Select(f => new
+        {
+            frameId = f.FrameId,
+            index = f.FrameIndex,
+            timestamp = f.CapturedAtUtc
+        })
+    );
 }
 
-<h2 class="mb-3">Latest Pressure Heatmap</h2>
+<div class="row mb-3">
+    <div class="col">
+        <h2 class="fw-bold mb-0">Pressure Heatmap</h2>
+    </div>
+</div>
 
-@if (Model == null)
+@if (Model.Frames == null || !Model.Frames.Any())
 {
     <div class="alert alert-info">
-        No pressure data found yet. Ask your clinician to upload a CSV session.
+        No heatmap data is available for this patient yet.
     </div>
 }
 else
 {
-    <div class="row mb-4">
-        <div class="col-md-3">
+    <div class="row g-4">
+        <!-- LEFT: Heatmap + metrics -->
+        <div class="col-lg-7">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <h6>Peak Pressure</h6>
-                    <p class="h4">@Model.PeakPressure</p>
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">Heatmap</span>
+                        <span id="frameHeaderTime" class="small text-white-50"></span>
+                    </div>
+                </div>
+                <div class="card-body text-center">
+                    <canvas id="heatmapCanvas"
+                            width="320"
+                            height="320"
+                            style="border-radius: 8px; border: 1px solid #e0e0e0;">
+                    </canvas>
+
+                    <div class="mt-3 row text-center">
+                        <div class="col-6 col-md-3 mb-2">
+                            <div class="border rounded py-2">
+                                <div class="small text-muted">Peak</div>
+                                <div class="fw-bold" id="peak">–</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <div class="border rounded py-2">
+                                <div class="small text-muted">Average</div>
+                                <div class="fw-bold" id="avg">–</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <div class="border rounded py-2">
+                                <div class="small text-muted">Contact area</div>
+                                <div class="fw-bold">
+                                    <span id="contact">–</span><span class="small"> %</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-2">
+                            <div class="border rounded py-2">
+                                <div class="small text-muted">Risk score</div>
+                                <span id="riskBadge" class="badge bg-secondary">
+                                    <span id="risk">–</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 small text-muted">
+                        Darker red = higher pressure
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h6>Average Pressure</h6>
-                    <p class="h4">@Model.AveragePressure.ToString("0.0")</p>
+
+        <!-- RIGHT: Controls / slider -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <span class="fw-semibold">Time Navigation</span>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h6>Contact Area</h6>
-                    <p class="h4">@Model.ContactAreaPercent.ToString("0.0")%</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h6>Risk Score</h6>
-                    <p class="h4">@Model.RiskScore</p>
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="small text-muted">Frame</span>
+                            <span class="small" id="frameInfo">–</span>
+                        </div>
+                        <input id="frameSlider"
+                               type="range"
+                               class="form-range"
+                               min="0"
+                               max="@(Model.Frames.Count - 1)"
+                               value="0" />
+                        <div class="d-flex justify-content-between small text-muted mt-1">
+                            <span>Start</span>
+                            <span>End</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small text-muted">Playback</div>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary" id="btnPlay">
+                                    ▶ Play
+                                </button>
+                                <button class="btn btn-outline-secondary" id="btnPause">
+                                    ⏸ Pause
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="small text-muted" for="speedSelect">Speed</label>
+                            <select id="speedSelect" class="form-select form-select-sm w-auto">
+                                <option value="800">Slow</option>
+                                <option value="400" selected>Normal</option>
+                                <option value="200">Fast</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto small text-muted">
+                        Use the slider or playback controls to see how pressure changes over time.
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <p class="text-muted">
-        Timestamp: @Model.Timestamp?.ToLocalTime().ToString("g")
-    </p>
+    @section Scripts {
+        <script>
+            const frames = @Html.Raw(framesJson);
 
-    <style>
-        .heatmap-grid {
-            display: grid;
-            grid-template-columns: repeat(32, 1fr);
-            max-width: 480px;
-            aspect-ratio: 32 / 32;
-            border: 1px solid #ccc;
-        }
+            const slider = document.getElementById('frameSlider');
+            const info = document.getElementById('frameInfo');
+            const headerTime = document.getElementById('frameHeaderTime');
+            const canvas = document.getElementById('heatmapCanvas');
+            const ctx = canvas.getContext('2d');
 
-        .heat-cell {
-            width: 100%;
-            height: 100%;
-        }
+            const peakEl = document.getElementById('peak');
+            const avgEl = document.getElementById('avg');
+            const contactEl = document.getElementById('contact');
+            const riskEl = document.getElementById('risk');
+            const riskBadge = document.getElementById('riskBadge');
 
-        .heat-zero {
-            background-color: #f8f9fa;
-        }
+            const btnPlay = document.getElementById('btnPlay');
+            const btnPause = document.getElementById('btnPause');
+            const speedSelect = document.getElementById('speedSelect');
 
-        .heat-low {
-            background-color: #cce5ff;
-        }
+            let playTimer = null;
 
-        .heat-med {
-            background-color: #66b2ff;
-        }
+            function setRiskStyle(score) {
+                riskBadge.classList.remove('bg-secondary', 'bg-success', 'bg-warning', 'bg-danger');
 
-        .heat-high {
-            background-color: #ff9933;
-        }
+                if (score === null || isNaN(score)) {
+                    riskBadge.classList.add('bg-secondary');
+                    return;
+                }
 
-        .heat-veryhigh {
-            background-color: #ff3333;
-        }
-    </style>
-
-    <div class="heatmap-grid mb-3">
-        @for (int r = 0; r < 32; r++)
-        {
-            for (int c = 0; c < 32; c++)
-            {
-                int v = Model.Values[r, c];
-                string cls = v < 10 ? "heat-zero"
-                : v < 50 ? "heat-low"
-                : v < 120 ? "heat-med"
-                : v < 200 ? "heat-high"
-                : "heat-veryhigh";
-
-                <div class="heat-cell @cls" title="@v"></div>
+                if (score < 30) {
+                    riskBadge.classList.add('bg-success');
+                } else if (score < 60) {
+                    riskBadge.classList.add('bg-warning');
+                } else {
+                    riskBadge.classList.add('bg-danger');
+                }
             }
-        }
-    </div>
 
-    <p class="text-muted">
-        Each square represents one sensor. Blue = low pressure, orange/red = high pressure.
-    </p>
+            function renderHeatmap(matrix) {
+                const rows = matrix.length;
+                const cols = matrix[0].length;
+                const cellW = canvas.width / cols;
+                const cellH = canvas.height / rows;
+
+                let max = 0;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (matrix[r][c] > max) max = matrix[r][c];
+                    }
+                }
+                if (max === 0) max = 1;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const value = matrix[r][c];
+                        const intensity = value / max;
+
+                        const red = 255;
+                        const g = Math.round(255 * (1 - intensity));
+                        const b = Math.round(255 * (1 - intensity));
+
+                        ctx.fillStyle = `rgb(${red},${g},${b})`;
+                        ctx.fillRect(c * cellW, r * cellH, cellW, cellH);
+                    }
+                }
+            }
+
+            async function loadFrame(index) {
+                const frame = frames[index];
+                if (!frame) return;
+
+                info.textContent = `#${frame.index} of ${frames.length - 1}`;
+                headerTime.textContent = new Date(frame.timestamp).toLocaleString();
+
+                const response = await fetch(`/api/heatmap/frame/${frame.frameId}`);
+                if (!response.ok) {
+                    console.error('Failed to load frame', response.status);
+                    return;
+                }
+
+                const data = await response.json();
+                renderHeatmap(data.values);
+
+                peakEl.textContent = data.peakPressure;
+                avgEl.textContent = data.averagePressure;
+                contactEl.textContent = data.contactAreaPercent;
+                riskEl.textContent = data.riskScore;
+                setRiskStyle(parseFloat(data.riskScore));
+            }
+
+            slider.addEventListener('input', e => {
+                const idx = parseInt(e.target.value);
+                loadFrame(idx);
+            });
+
+            function startPlayback() {
+                if (playTimer) return;
+
+                playTimer = setInterval(() => {
+                    let idx = parseInt(slider.value);
+                    if (idx >= frames.length - 1) {
+                        idx = 0;
+                    } else {
+                        idx++;
+                    }
+                    slider.value = idx;
+                    loadFrame(idx);
+                }, parseInt(speedSelect.value));
+            }
+
+            function stopPlayback() {
+                if (playTimer) {
+                    clearInterval(playTimer);
+                    playTimer = null;
+                }
+            }
+
+            btnPlay.addEventListener('click', startPlayback);
+            btnPause.addEventListener('click', stopPlayback);
+            speedSelect.addEventListener('change', () => {
+                if (playTimer) {
+                    stopPlayback();
+                    startPlayback();
+                }
+            });
+
+            if (frames.length > 0) {
+                slider.value = 0;
+                loadFrame(0);
+            }
+        </script>
+    }
 }
