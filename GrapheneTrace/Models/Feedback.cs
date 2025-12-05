@@ -17,14 +17,14 @@ namespace GrapheneTrace.Models
         public Patient Patient { get; set; } = null!;
 
         // -------------------------
-        // CLINICIAN RELATION (OPTIONAL)
+        // CLINICIAN RELATION 
         // -------------------------
         [ForeignKey(nameof(Clinician))]
         public int? ClinicianId { get; set; }
         public Clinician? Clinician { get; set; }
 
         // -------------------------
-        // DATA FILE / SESSION (OPTIONAL)
+        // DATA FILE / SESSION 
         // -------------------------
         [ForeignKey(nameof(DataFile))]
         public int? DataFileId { get; set; }

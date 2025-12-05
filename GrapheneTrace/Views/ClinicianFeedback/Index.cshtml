@@ -15,6 +15,7 @@
 {
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
+
 @if (TempData["Message"] != null)
 {
     <div class="alert alert-success">@TempData["Message"]</div>
@@ -23,13 +24,13 @@
 @if (Model == null || !Model.Any())
 {
     <div class="alert alert-info">
-        There is no feedback to review.
+        No feedback has been received from your assigned patients yet.
     </div>
 }
 else
 {
-    <table class="table table-striped align-middle">
-        <thead>
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
             <tr>
                 <th>Date</th>
                 <th>Patient</th>
@@ -44,31 +45,29 @@ else
                 <tr>
                     <td>@f.CreatedAt.ToLocalTime().ToString("g")</td>
                     <td>@f.Patient.UserAccount.Email</td>
-
-                    <!-- Rating is now an int; 0 = no rating -->
-                    <td>@(f.Rating <= 0 ? "-" : f.Rating.ToString())</td>
-
+                    <td>@(f.Rating == 0 ? "-" : f.Rating.ToString())</td>
                     <td>@f.Comment</td>
-                    <td>
-                        @if (!string.IsNullOrWhiteSpace(f.ClinicianReply))
+                    <td style="min-width: 250px;">
+
+                        @if (!string.IsNullOrEmpty(f.ClinicianReply))
                         {
                             <div>@f.ClinicianReply</div>
                             <small class="text-muted">
-                                Replied at @f.ClinicianReplyAt?.ToLocalTime().ToString("g")
+                                Replied @f.ClinicianReplyAt?.ToLocalTime().ToString("g")
                             </small>
                         }
                         else
                         {
-                            <form asp-action="Reply" method="post" class="mt-2">
+                            <form asp-action="Reply" method="post">
                                 <input type="hidden" name="feedbackId" value="@f.FeedbackId" />
-                                <div class="mb-2">
-                                    <textarea class="form-control"
-                                  name="reply"
-                                  rows="2"
-                                  required
-                                  placeholder="Write a reply to the patient..."></textarea>
-                                </div>
-                                <button class="btn btn-sm btn-primary">Send Reply</button>
+
+                                <textarea class="form-control mb-2"
+                              name="reply"
+                              rows="2"
+                              placeholder="Write a reply…"
+                              required></textarea>
+
+                                <button class="btn btn-sm btn-primary">Send</button>
                             </form>
                         }
                     </td>
