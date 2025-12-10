@@ -1,41 +1,61 @@
 ﻿@model List<GrapheneTrace.Models.Appointment>
-
-<h2 class="mb-4">Appointments</h2>
-
-@if (ViewBag.Role == "Admin" || ViewBag.Role == "Clinician")
-{
-    <a class="btn btn-primary mb-3" href="/Appointment/Create">➕ Create Appointment</a>
+@{
+    ViewData["Title"] = "Appointments";
+    var role = ViewBag.Role as string;
 }
 
-<table class="table table-striped table-hover">
-    <thead>
-        <tr>
-            <th>Patient</th>
-            <th>Clinician</th>
-            <th>Start</th>
-            <th>End</th>
-            <th></th>
-        </tr>
-    </thead>
+<h2>Appointments</h2>
 
-    <tbody>
-        @foreach (var a in Model)
-        {
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+
+<a class="btn btn-primary mb-3" href="/Appointment/Create">➕ Create Appointment</a>
+
+@if (!Model.Any())
+{
+    <div>No appointments found.</div>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
             <tr>
-                <td>@a.Patient.UserAccount.Email</td>
-                <td>@a.Clinician.UserAccount.Email</td>
-                <td>@a.StartTime.ToLocalTime()</td>
-                <td>@a.EndTime.ToLocalTime()</td>
-
-                <td>
-                    <a class="btn btn-sm btn-outline-primary" href="/Appointment/Edit?id=@a.AppointmentId">Edit</a>
-
-                    <form method="post" action="/Appointment/Delete" style="display:inline;">
-                        <input type="hidden" name="id" value="@a.AppointmentId" />
-                        <button class="btn btn-sm btn-danger">Delete</button>
-                    </form>
-                </td>
+                <th>Patient</th>
+                <th>Clinician</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Status</th>
+                @if (role == "Admin" || role == "Clinician")
+                {
+                    <th>Actions</th>
+                }
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td>@a.Patient.UserAccount.Email</td>
+                    <td>@a.Clinician.UserAccount.Email</td>
+                    <td>@a.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@a.EndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@a.Status</td>
+                    @if (role == "Admin" || role == "Clinician")
+                    {
+                        <td style="white-space: nowrap;">
+                            <a class="btn btn-sm btn-outline-primary" href="/Appointment/Edit?id=@a.AppointmentId">Edit</a>
+
+                            <form method="post" action="/Appointment/Delete" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@a.AppointmentId" />
+                                <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this appointment?')">Delete</button>
+                            </form>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}

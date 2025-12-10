@@ -1,47 +1,46 @@
 ﻿@model GrapheneTrace.Models.Appointment
+@{
+    ViewData["Title"] = "Edit Appointment";
+    var patients = ViewBag.Patients as List<GrapheneTrace.Models.Patient>;
+    var clinicians = ViewBag.Clinicians as List<GrapheneTrace.Models.Clinician>;
+}
 
-<h2 class="mb-4">Edit Appointment</h2>
+<h2>Edit Appointment</h2>
 
-<form method="post" class="card p-4 shadow-sm">
+<form method="post" asp-controller="Appointment" asp-action="Edit">
+    @Html.AntiForgeryToken()
     <input type="hidden" name="appointmentId" value="@Model.AppointmentId" />
 
     <div class="mb-3">
-        <label>Patient</label>
-        <select class="form-select" name="patientId">
-            @foreach (var p in ViewBag.Patients)
+        <label class="form-label">Patient</label>
+        <select class="form-select" name="patientId" required>
+            @foreach (var p in patients)
             {
-                <option value="@p.PatientId" @(p.PatientId == Model.PatientId ? "selected" : "")>
-                    @p.UserAccount.Email
-                </option>
+                <option value="@p.PatientId" @(p.PatientId == Model.PatientId ? "selected" : "")>@p.UserAccount.Email</option>
             }
         </select>
     </div>
 
     <div class="mb-3">
-        <label>Clinician</label>
-        <select class="form-select" name="clinicianId">
-            @foreach (var c in ViewBag.Clinicians)
+        <label class="form-label">Clinician</label>
+        <select class="form-select" name="clinicianId" required>
+            @foreach (var c in clinicians)
             {
-                <option value="@c.ClinicianId" @(c.ClinicianId == Model.ClinicianId ? "selected" : "")>
-                    @c.UserAccount.Email
-                </option>
+                <option value="@c.ClinicianId" @(c.ClinicianId == Model.ClinicianId ? "selected" : "")>@c.UserAccount.Email</option>
             }
         </select>
     </div>
 
     <div class="mb-3">
-        <label>Start Time</label>
-        <input class="form-control" type="datetime-local"
-               name="start"
-               value="@Model.StartTime.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
+        <label class="form-label">Start Time</label>
+        <input type="datetime-local" class="form-control" name="start" value="@Model.StartTime.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" required />
     </div>
 
     <div class="mb-3">
-        <label>End Time</label>
-        <input class="form-control" type="datetime-local"
-               name="end"
-               value="@Model.EndTime.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" />
+        <label class="form-label">End Time</label>
+        <input type="datetime-local" class="form-control" name="end" value="@Model.EndTime.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" required />
     </div>
 
-    <button class="btn btn-primary w-100">Save Changes</button>
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a class="btn btn-secondary" href="/Appointment/Index">Cancel</a>
 </form>

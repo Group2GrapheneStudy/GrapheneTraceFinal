@@ -1,14 +1,24 @@
 ﻿@{
     ViewData["Title"] = "Create Appointment";
+    var patients = ViewBag.Patients as List<GrapheneTrace.Models.Patient>;
+    var clinicians = ViewBag.Clinicians as List<GrapheneTrace.Models.Clinician>;
 }
 
-<h2 class="mb-4">Create Appointment</h2>
+<h2>Create Appointment</h2>
 
-<form method="post" class="card p-4 shadow-sm">
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form method="post" asp-controller="Appointment" asp-action="Create">
+    @Html.AntiForgeryToken()
+
     <div class="mb-3">
-        <label>Patient</label>
+        <label for="patientId" class="form-label">Patient</label>
         <select class="form-select" name="patientId" required>
-            @foreach (var p in ViewBag.Patients)
+            <option value="">-- Select Patient --</option>
+            @foreach (var p in patients)
             {
                 <option value="@p.PatientId">@p.UserAccount.Email</option>
             }
@@ -16,9 +26,10 @@
     </div>
 
     <div class="mb-3">
-        <label>Clinician</label>
+        <label for="clinicianId" class="form-label">Clinician</label>
         <select class="form-select" name="clinicianId" required>
-            @foreach (var c in ViewBag.Clinicians)
+            <option value="">-- Select Clinician --</option>
+            @foreach (var c in clinicians)
             {
                 <option value="@c.ClinicianId">@c.UserAccount.Email</option>
             }
@@ -26,14 +37,14 @@
     </div>
 
     <div class="mb-3">
-        <label>Start Time</label>
-        <input class="form-control" type="datetime-local" name="start" required />
+        <label for="start" class="form-label">Start Time</label>
+        <input type="datetime-local" class="form-control" name="start" required />
     </div>
 
     <div class="mb-3">
-        <label>End Time</label>
-        <input class="form-control" type="datetime-local" name="end" required />
+        <label for="end" class="form-label">End Time</label>
+        <input type="datetime-local" class="form-control" name="end" required />
     </div>
 
-    <button class="btn btn-primary w-100">Create Appointment</button>
+    <button type="submit" class="btn btn-primary">Create Appointment</button>
 </form>

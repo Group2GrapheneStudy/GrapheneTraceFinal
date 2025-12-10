@@ -48,7 +48,7 @@ namespace GrapheneTrace.Controllers
         }
 
         // ----------------------------------------------------------
-        // CREATE APPOINTMENT (ADMIN + CLINICIAN)
+        // CREATE APPOINTMENT
         // ----------------------------------------------------------
         [RoleAuthorize("Admin", "Clinician")]
         [HttpGet]
@@ -61,12 +61,23 @@ namespace GrapheneTrace.Controllers
 
         [RoleAuthorize("Admin", "Clinician")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(int patientId, int clinicianId, DateTime start, DateTime end)
         {
+            if (patientId == 0 || clinicianId == 0)
+            {
+                TempData["Error"] = "Please select both patient and clinician.";
+                ViewBag.Patients = await _context.Patients.Include(p => p.UserAccount).ToListAsync();
+                ViewBag.Clinicians = await _context.Clinicians.Include(c => c.UserAccount).ToListAsync();
+                return View();
+            }
+
             if (start >= end)
             {
                 TempData["Error"] = "End time must be after start time.";
-                return RedirectToAction("Create");
+                ViewBag.Patients = await _context.Patients.Include(p => p.UserAccount).ToListAsync();
+                ViewBag.Clinicians = await _context.Clinicians.Include(c => c.UserAccount).ToListAsync();
+                return View();
             }
 
             var createdBy = HttpContext.Session.GetInt32(SessionKeys.UserId)!.Value;
@@ -84,13 +95,15 @@ namespace GrapheneTrace.Controllers
             _context.Appointments.Add(appt);
             await _context.SaveChangesAsync();
 
+            TempData["Message"] = "Appointment created successfully.";
             return RedirectToAction("Index");
         }
 
         // ----------------------------------------------------------
-        // EDIT APPOINTMENT (ALL ROLES)
+        // EDIT APPOINTMENT
         // ----------------------------------------------------------
         [HttpGet]
+        [RoleAuthorize("Admin", "Clinician")]
         public async Task<IActionResult> Edit(int id)
         {
             var appt = await _context.Appointments
@@ -108,6 +121,8 @@ namespace GrapheneTrace.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RoleAuthorize("Admin", "Clinician")]
         public async Task<IActionResult> Edit(int appointmentId, int patientId, int clinicianId, DateTime start, DateTime end)
         {
             var appt = await _context.Appointments.FindAsync(appointmentId);
@@ -121,13 +136,16 @@ namespace GrapheneTrace.Controllers
             appt.EndTime = end.ToUniversalTime();
 
             await _context.SaveChangesAsync();
+            TempData["Message"] = "Appointment updated successfully.";
             return RedirectToAction("Index");
         }
 
         // ----------------------------------------------------------
-        // DELETE APPOINTMENT (ALL ROLES)
+        // DELETE APPOINTMENT
         // ----------------------------------------------------------
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RoleAuthorize("Admin", "Clinician")]
         public async Task<IActionResult> Delete(int id)
         {
             var appt = await _context.Appointments.FindAsync(id);
@@ -138,6 +156,7 @@ namespace GrapheneTrace.Controllers
             _context.Appointments.Remove(appt);
             await _context.SaveChangesAsync();
 
+            TempData["Message"] = "Appointment deleted successfully.";
             return RedirectToAction("Index");
         }
     }
