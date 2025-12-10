@@ -4,7 +4,7 @@
     ViewData["Title"] = "Select Patient Trend";
 }
 
-<h2 class="mb-3">Select Patient to View Pressure Trend</h2>
+<h2 class="mb-3">Select Patient to View Pressure Trend or Prescriptions</h2>
 
 @if (Model == null || !Model.Any())
 {
@@ -20,7 +20,7 @@ else
                 <th>ID</th>
                 <th>Email</th>
                 <th>External Id</th>
-                <th></th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -34,6 +34,11 @@ else
                         <a class="btn btn-sm btn-primary"
                            href="/ClinicianData/Trend?patientId=@p.PatientId">
                             View Trend
+                        </a>
+
+                        <a class="btn btn-sm btn-success"
+                           href="/Prescriptions/Index?patientId=@p.PatientId">
+                            View Prescriptions
                         </a>
                     </td>
                 </tr>

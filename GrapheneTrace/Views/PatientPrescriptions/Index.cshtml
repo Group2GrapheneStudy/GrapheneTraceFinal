@@ -1,0 +1,44 @@
+@model List<GrapheneTrace.Models.Prescription>
+
+@{
+    ViewData["Title"] = "My Prescriptions";
+}
+
+<h2>My Prescriptions</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        You have no prescriptions yet.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Drug Name</th>
+                <th>Dosage</th>
+                <th>Frequency</th>
+                <th>Quantity</th>
+                <th>Date Prescribed</th>
+                <th>Instructions</th>
+                <th>Prescribed By</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.DrugName</td>
+                    <td>@p.Dosage</td>
+                    <td>@p.Frequency</td>
+                    <td>@p.Quantity</td>
+                    <td>@p.DatePrescribed.ToString("yyyy-MM-dd")</td>
+                    <td>@p.Instructions</td>
+                    <td>@p.Clinician?.UserAccount?.Email</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

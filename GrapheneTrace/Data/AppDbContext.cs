@@ -19,16 +19,43 @@ namespace GrapheneTrace.Data
         public DbSet<Alert> Alerts => Set<Alert>();
         public DbSet<Feedback> Feedbacks => Set<Feedback>();
 
-        // FIXED — ONLY ONE APPOINTMENT DBSET
+        // APPOINTMENTS
         public DbSet<Appointment> Appointments => Set<Appointment>();
 
-        public DbSet<Prescription> Prescriptions => Set<Prescription>();
-        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        // PRESCRIPTIONS (UPDATED)
+        public DbSet<Prescription> Prescriptions { get; set; }
 
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
         protected override void OnModelCreating(ModelBuilder model)
         {
             base.OnModelCreating(model);
+
+            // ------------------------------
+            // PRESCRIPTION CONFIGURATION
+            // ------------------------------
+            model.Entity<Prescription>()
+                .Property(p => p.Id)
+                .HasColumnType("int")
+                .ValueGeneratedOnAdd();
+
+            // Prescription → Patient
+            model.Entity<Prescription>()
+                .HasOne(p => p.Patient)
+                .WithMany(pt => pt.Prescriptions)
+                .HasForeignKey(p => p.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Prescription → Clinician
+            model.Entity<Prescription>()
+                .HasOne(p => p.Clinician)
+                .WithMany(c => c.Prescriptions)
+                .HasForeignKey(p => p.ClinicianId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ------------------------------
+            // OTHER EXISTING CONFIGURATIONS
+            // ------------------------------
 
             // USER ↔ PATIENT
             model.Entity<Patient>()

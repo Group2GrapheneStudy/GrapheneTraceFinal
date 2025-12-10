@@ -4,6 +4,7 @@ using GrapheneTrace.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GrapheneTrace.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251206015137_StandardizePrescriptionDatesFinal")]
+    partial class StandardizePrescriptionDatesFinal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -356,53 +359,64 @@ namespace GrapheneTrace.Migrations
 
             modelBuilder.Entity("GrapheneTrace.Models.Prescription", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("PrescriptionId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PrescriptionId"));
 
                     b.Property<int>("ClinicianId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("DatePrescribed")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Dosage")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("DrugName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<int?>("DurationDays")
+                        .HasColumnType("int");
 
-                    b.Property<string>("Frequency")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Instructions")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("IssuedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MedicationName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int?>("UserAccountUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("Id");
+                    b.HasKey("PrescriptionId");
 
                     b.HasIndex("ClinicianId");
 
-                    b.HasIndex("PatientId");
+                    b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("UserAccountUserId");
+                    b.HasIndex("PatientId");
 
                     b.ToTable("Prescriptions");
                 });
@@ -643,20 +657,24 @@ namespace GrapheneTrace.Migrations
                     b.HasOne("GrapheneTrace.Models.Clinician", "Clinician")
                         .WithMany("Prescriptions")
                         .HasForeignKey("ClinicianId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GrapheneTrace.Models.UserAccount", "CreatedByUser")
+                        .WithMany("CreatedPrescriptions")
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GrapheneTrace.Models.Patient", "Patient")
                         .WithMany("Prescriptions")
                         .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GrapheneTrace.Models.UserAccount", null)
-                        .WithMany("CreatedPrescriptions")
-                        .HasForeignKey("UserAccountUserId");
-
                     b.Navigation("Clinician");
+
+                    b.Navigation("CreatedByUser");
 
                     b.Navigation("Patient");
                 });

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -7,33 +7,30 @@ namespace GrapheneTrace.Models
     public class Prescription
     {
         [Key]
-        public int PrescriptionId { get; set; }
-
-        [ForeignKey(nameof(Patient))]
-        public int PatientId { get; set; }
-
-        public Patient Patient { get; set; } = null!;
-
-        [ForeignKey(nameof(Clinician))]
-        public int ClinicianId { get; set; }
-
-        public Clinician Clinician { get; set; } = null!;
-
-        [ForeignKey(nameof(CreatedByUser))]
-        public int CreatedByUserId { get; set; }
-
-        public UserAccount CreatedByUser { get; set; } = null!;
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public int Id { get; set; }
 
         [Required]
-        [MaxLength(200)]
-        public string MedicationName { get; set; } = null!;
+        [ForeignKey(nameof(Patient))]
+        public int PatientId { get; set; }
+        public Patient Patient { get; set; } = null!;
 
-        [MaxLength(200)]
-        public string? Dosage { get; set; }
+        [Required]
+        [ForeignKey(nameof(Clinician))]
+        public int ClinicianId { get; set; }
+        public Clinician Clinician { get; set; } = null!;
 
-        [MaxLength(1000)]
+        [Required]
+        public string DrugName { get; set; } = string.Empty;
+
+        public string Dosage { get; set; } = string.Empty;
+
+        public string Frequency { get; set; } = string.Empty;
+
+        [Range(1, 1000)]
+        public int Quantity { get; set; }
+
         public string? Instructions { get; set; }
+
+        public DateTime DatePrescribed { get; set; } = DateTime.UtcNow;
     }
 }

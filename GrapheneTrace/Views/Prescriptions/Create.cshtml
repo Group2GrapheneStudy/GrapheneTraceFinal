@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "Create Prescription";
+}
+
+<h2>Create Prescription</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()  <!-- Required for [ValidateAntiForgeryToken] -->
+
+    <!-- Patient Dropdown -->
+    <div class="mb-3">
+        <label for="patientId" class="form-label">Patient</label>
+        <select class="form-select" id="patientId" name="patientId" required>
+            <option value="">-- Select Patient --</option>
+            @foreach (var p in ViewBag.Patients)
+            {
+                <option value="@p.PatientId">@p.UserAccount.Email</option>
+            }
+        </select>
+    </div>
+
+    <!-- Drug Name -->
+    <div class="mb-3">
+        <label for="drugName" class="form-label">Drug Name</label>
+        <input type="text" class="form-control" id="drugName" name="drugName" required />
+    </div>
+
+    <!-- Dosage -->
+    <div class="mb-3">
+        <label for="dosage" class="form-label">Dosage</label>
+        <input type="text" class="form-control" id="dosage" name="dosage" />
+    </div>
+
+    <!-- Frequency -->
+    <div class="mb-3">
+        <label for="frequency" class="form-label">Frequency</label>
+        <input type="text" class="form-control" id="frequency" name="frequency" />
+    </div>
+
+    <!-- Quantity -->
+    <div class="mb-3">
+        <label for="quantity" class="form-label">Quantity</label>
+        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required />
+    </div>
+
+    <!-- Instructions -->
+    <div class="mb-3">
+        <label for="instructions" class="form-label">Instructions</label>
+        <textarea class="form-control" id="instructions" name="instructions"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Prescription</button>
+</form>

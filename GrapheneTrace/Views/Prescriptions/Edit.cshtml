@@ -1,0 +1,51 @@
+@model GrapheneTrace.Models.Prescription
+
+@{
+    ViewData["Title"] = "Edit Prescription";
+}
+
+<h2>Edit Prescription</h2>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <div class="mb-3">
+        <label for="patientId" class="form-label">Patient</label>
+        <select class="form-select" id="patientId" name="patientId" required>
+            @foreach (var p in ViewBag.Patients)
+            {
+                <option value="@p.PatientId" @(p.PatientId == Model.PatientId ? "selected" : "")>
+                    @p.UserAccount.Email
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="drugName" class="form-label">Drug Name</label>
+        <input type="text" class="form-control" id="drugName" name="drugName" value="@Model.DrugName" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="dosage" class="form-label">Dosage</label>
+        <input type="text" class="form-control" id="dosage" name="dosage" value="@Model.Dosage" />
+    </div>
+
+    <div class="mb-3">
+        <label for="frequency" class="form-label">Frequency</label>
+        <input type="text" class="form-control" id="frequency" name="frequency" value="@Model.Frequency" />
+    </div>
+
+    <div class="mb-3">
+        <label for="quantity" class="form-label">Quantity</label>
+        <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="@Model.Quantity" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="instructions" class="form-label">Instructions</label>
+        <textarea class="form-control" id="instructions" name="instructions">@Model.Instructions</textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+</form>

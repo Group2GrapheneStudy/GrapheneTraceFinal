@@ -1,9 +1,31 @@
 ﻿@using GrapheneTrace.Helpers
+@using Microsoft.EntityFrameworkCore
 @inject IHttpContextAccessor Http
 
 @{
     var role = Http.HttpContext?.Session.GetString(SessionKeys.UserRole);
     var email = Http.HttpContext?.Session.GetString(SessionKeys.UserEmail);
+    int prescriptionCount = 0;
+
+    // Only check prescriptions for patients
+    if (role == "Patient")
+    {
+        var patientId = Http.HttpContext?.Session.GetInt32(SessionKeys.UserId);
+        if (patientId != null)
+        {
+            using var scope = Http.HttpContext.RequestServices.CreateScope();
+            var _context = scope.ServiceProvider.GetRequiredService<GrapheneTrace.Data.AppDbContext>();
+
+            var patient = _context.Patients
+                .Include(p => p.Prescriptions)
+                .FirstOrDefault(p => p.UserId == patientId.Value);
+
+            if (patient != null)
+            {
+                prescriptionCount = patient.Prescriptions.Count;
+            }
+        }
+    }
 }
 
 <!DOCTYPE html>
@@ -37,30 +59,32 @@
 
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto">
-                    @* ADMIN NAV *@
+
+                    @* ---------------------------- *
+                       ADMIN NAVIGATION
+                       ---------------------------- *@
                     @if (role == "Admin")
                     {
                         <li class="nav-item">
                             <a class="nav-link" href="/Admin/Index">Admin Dashboard</a>
                         </li>
-
                         <li class="nav-item">
                             <a class="nav-link" href="/Admin/Patients">Patients</a>
                         </li>
-
                         <li class="nav-item">
                             <a class="nav-link" href="/Admin/Clinicians">Clinicians</a>
                         </li>
-
                         <li class="nav-item">
                             <a class="nav-link" href="/Appointment/Index">Appointments</a>
                         </li>
-
                         <li class="nav-item">
                             <a class="nav-link" href="/Admin/Feedback">Feedback</a>
                         </li>
                     }
-                    @* CLINICIAN NAV *@
+
+                    @* ---------------------------- *
+                       CLINICIAN NAVIGATION
+                       ---------------------------- *@
                     else if (role == "Clinician")
                     {
                         <li class="nav-item">
@@ -75,8 +99,16 @@
                         <li class="nav-item">
                             <a class="nav-link" href="/ClinicianFeedback/Index">Feedback</a>
                         </li>
+
+                        @*  NEW: PRESCRIPTIONS TAB  *@
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Prescriptions/Index">Prescriptions</a>
+                        </li>
                     }
-                    @* PATIENT NAV *@
+
+                    @* ---------------------------- *
+                       PATIENT NAVIGATION
+                       ---------------------------- *@
                     else if (role == "Patient")
                     {
                         <li class="nav-item">
@@ -100,7 +132,17 @@
                         <li class="nav-item">
                             <a class="nav-link" href="/PatientReport/Download">Download Report</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/PatientPrescriptions/Index">
+                                My Prescriptions
+                                @if (prescriptionCount > 0)
+                                {
+                                    <span class="badge bg-warning text-dark">@prescriptionCount</span>
+                                }
+                            </a>
+                        </li>
                     }
+
                 </ul>
 
                 <div class="d-flex">
