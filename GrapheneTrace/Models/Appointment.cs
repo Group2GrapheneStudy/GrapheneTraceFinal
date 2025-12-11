@@ -20,7 +20,7 @@ namespace GrapheneTrace.Models
         public Clinician Clinician { get; set; } = null!;
 
         /// <summary>
-        /// Which user created this appointment (admin/clinician).
+        /// Which user created this appointment (admin/clinician/patient).
         /// </summary>
         [ForeignKey(nameof(CreatedByUser))]
         public int CreatedByUserId { get; set; }
@@ -33,9 +33,9 @@ namespace GrapheneTrace.Models
 
         [MaxLength(200)]
         public string? Location { get; set; }
-
+		[Required]
         [MaxLength(50)]
-        public string Status { get; set; } = "Scheduled";
+        public string Status { get; set; } = "Pending"; //Default for patient self-booking
 
         [MaxLength(1000)]
         public string? Notes { get; set; }

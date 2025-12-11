@@ -1,4 +1,5 @@
-﻿@model List<GrapheneTrace.Models.Appointment>
+﻿@using GrapheneTrace.Helpers
+@model List<GrapheneTrace.Models.Appointment>
 @{
     ViewData["Title"] = "Appointments";
     var role = ViewBag.Role as string;
@@ -37,14 +38,15 @@ else
             @foreach (var a in Model)
             {
                 <tr>
-                    <td>@a.Patient.UserAccount.Email</td>
-                    <td>@a.Clinician.UserAccount.Email</td>
+                    <td>@a.Patient?.UserAccount?.Email</td>
+                    <td>@a.Clinician?.UserAccount?.Email</td>
                     <td>@a.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                     <td>@a.EndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                     <td>@a.Status</td>
                     @if (role != null)
                     {
                         <td style="white-space: nowrap;">
+                            @* Edit/Delete buttons shown for any scheduled or other status appointment *@
                             <a class="btn btn-sm btn-outline-primary" href="/Appointment/Edit?id=@a.AppointmentId">Edit</a>
 
                             <form method="post" action="/Appointment/Delete" style="display:inline;">
@@ -52,6 +54,24 @@ else
                                 <input type="hidden" name="id" value="@a.AppointmentId" />
                                 <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this appointment?')">Delete</button>
                             </form>
+
+                            @* Approve/Decline buttons for pending appointments only *@
+                            @if (role == "Clinician" && a.Status == "Pending")
+                            {
+                                <form method="post" action="@Url.Action("UpdateStatus", "Appointment")" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="appointmentId" value="@a.AppointmentId" />
+                                    <input type="hidden" name="newStatus" value="Scheduled" />
+                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                </form>
+
+                                <form method="post" action="@Url.Action("UpdateStatus", "Appointment")" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="appointmentId" value="@a.AppointmentId" />
+                                    <input type="hidden" name="newStatus" value="Cancelled" />
+                                    <button type="submit" class="btn btn-sm btn-warning">Decline</button>
+                                </form>
+                            }
                         </td>
                     }
                 </tr>
