@@ -42,7 +42,7 @@ else
                     <td>@a.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                     <td>@a.EndTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                     <td>@a.Status</td>
-                    @if (role == "Admin" || role == "Clinician")
+                    @if (role != null)
                     {
                         <td style="white-space: nowrap;">
                             <a class="btn btn-sm btn-outline-primary" href="/Appointment/Edit?id=@a.AppointmentId">Edit</a>

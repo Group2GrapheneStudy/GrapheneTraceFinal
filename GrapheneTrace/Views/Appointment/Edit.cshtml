@@ -11,15 +11,30 @@
     @Html.AntiForgeryToken()
     <input type="hidden" name="appointmentId" value="@Model.AppointmentId" />
 
+   
     <div class="mb-3">
         <label class="form-label">Patient</label>
-        <select class="form-select" name="patientId" required>
-            @foreach (var p in patients)
-            {
-                <option value="@p.PatientId" @(p.PatientId == Model.PatientId ? "selected" : "")>@p.UserAccount.Email</option>
-            }
-        </select>
+
+        @if (ViewBag.Role == "Patient")
+        {
+            <!-- Hidden input to keep the patientId for form submission -->
+            <input type="hidden" name="patientId" value="@Model.PatientId" />
+            <!-- Display "Logged-in patient" -->
+            <input class="form-control" value="Logged-in patient" readonly />
+        }
+        else
+        {
+            <select class="form-select" name="patientId" required>
+                @foreach (var p in patients)
+                {
+                    <option value="@p.PatientId" @(p.PatientId == Model.PatientId ? "selected" : "")>
+                        @(p.UserAccount?.Email ?? "Logged-In Patient Email")
+                    </option>
+                }
+            </select>
+        }
     </div>
+
 
     <div class="mb-3">
         <label class="form-label">Clinician</label>

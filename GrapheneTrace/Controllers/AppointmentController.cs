@@ -50,16 +50,36 @@ namespace GrapheneTrace.Controllers
         // ----------------------------------------------------------
         // CREATE APPOINTMENT
         // ----------------------------------------------------------
-        [RoleAuthorize("Admin", "Clinician")]
+        [RoleAuthorize("Admin", "Clinician", "Patient")]
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            ViewBag.Patients = await _context.Patients.Include(p => p.UserAccount).ToListAsync();
-            ViewBag.Clinicians = await _context.Clinicians.Include(c => c.UserAccount).ToListAsync();
+            var userId = HttpContext.Session.GetInt32(SessionKeys.UserId);
+            var role = HttpContext.Session.GetString(SessionKeys.UserRole);
+
+            if (role == "Patient")
+            {
+                var patient = await _context.Patients
+                    .Include(p => p.UserAccount)
+                    .FirstOrDefaultAsync(p => p.UserId == userId);
+
+                ViewBag.Patients = new List<Patient> { patient };
+            }
+            else
+            {
+                ViewBag.Patients = await _context.Patients
+                    .Include(p => p.UserAccount)
+                    .ToListAsync();
+            }
+
+            ViewBag.Clinicians = await _context.Clinicians
+                .Include(c => c.UserAccount)
+                .ToListAsync();
+
             return View();
         }
 
-        [RoleAuthorize("Admin", "Clinician")]
+        [RoleAuthorize("Admin", "Clinician", "Patient")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(int patientId, int clinicianId, DateTime start, DateTime end)
@@ -67,17 +87,13 @@ namespace GrapheneTrace.Controllers
             if (patientId == 0 || clinicianId == 0)
             {
                 TempData["Error"] = "Please select both patient and clinician.";
-                ViewBag.Patients = await _context.Patients.Include(p => p.UserAccount).ToListAsync();
-                ViewBag.Clinicians = await _context.Clinicians.Include(c => c.UserAccount).ToListAsync();
-                return View();
+                return RedirectToAction("Create");
             }
 
             if (start >= end)
             {
                 TempData["Error"] = "End time must be after start time.";
-                ViewBag.Patients = await _context.Patients.Include(p => p.UserAccount).ToListAsync();
-                ViewBag.Clinicians = await _context.Clinicians.Include(c => c.UserAccount).ToListAsync();
-                return View();
+                return RedirectToAction("Create");
             }
 
             var createdBy = HttpContext.Session.GetInt32(SessionKeys.UserId)!.Value;
@@ -100,35 +116,66 @@ namespace GrapheneTrace.Controllers
         }
 
         // ----------------------------------------------------------
-        // EDIT APPOINTMENT
+        // EDIT APPOINTMENT (SECURE FOR PATIENTS)
         // ----------------------------------------------------------
         [HttpGet]
-        [RoleAuthorize("Admin", "Clinician")]
+        [RoleAuthorize("Admin", "Clinician", "Patient")]
         public async Task<IActionResult> Edit(int id)
         {
+            var userId = HttpContext.Session.GetInt32(SessionKeys.UserId);
+            var role = HttpContext.Session.GetString(SessionKeys.UserRole);
+
             var appt = await _context.Appointments
-                .Include(a => a.Patient).ThenInclude(p => p.UserAccount)
-                .Include(a => a.Clinician).ThenInclude(c => c.UserAccount)
+                .Include(a => a.Patient)
+                .Include(a => a.Clinician)
                 .FirstOrDefaultAsync(a => a.AppointmentId == id);
 
             if (appt == null)
                 return NotFound();
 
-            ViewBag.Patients = await _context.Patients.Include(p => p.UserAccount).ToListAsync();
-            ViewBag.Clinicians = await _context.Clinicians.Include(c => c.UserAccount).ToListAsync();
+            // PATIENT SECURITY CHECK
+            if (role == "Patient")
+            {
+                var patient = await _context.Patients.FirstAsync(p => p.UserId == userId);
+
+                if (appt.PatientId != patient.PatientId)
+                    return Unauthorized(); // <---- BLOCK EDITING OTHER PEOPLE'S APPOINTMENTS
+
+                ViewBag.Patients = new List<Patient> { patient };
+            }
+            else
+            {
+                ViewBag.Patients = await _context.Patients
+                    .Include(p => p.UserAccount)
+                    .ToListAsync();
+            }
+
+            ViewBag.Clinicians = await _context.Clinicians
+                .Include(c => c.UserAccount)
+                .ToListAsync();
 
             return View(appt);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize("Admin", "Clinician")]
+        [RoleAuthorize("Admin", "Clinician", "Patient")]
         public async Task<IActionResult> Edit(int appointmentId, int patientId, int clinicianId, DateTime start, DateTime end)
         {
-            var appt = await _context.Appointments.FindAsync(appointmentId);
+            var userId = HttpContext.Session.GetInt32(SessionKeys.UserId);
+            var role = HttpContext.Session.GetString(SessionKeys.UserRole);
 
+            var appt = await _context.Appointments.FindAsync(appointmentId);
             if (appt == null)
                 return NotFound();
+
+            // PATIENT SECURITY CHECK
+            if (role == "Patient")
+            {
+                var patient = await _context.Patients.FirstAsync(p => p.UserId == userId);
+                if (appt.PatientId != patient.PatientId)
+                    return Unauthorized();
+            }
 
             appt.PatientId = patientId;
             appt.ClinicianId = clinicianId;
@@ -141,17 +188,28 @@ namespace GrapheneTrace.Controllers
         }
 
         // ----------------------------------------------------------
-        // DELETE APPOINTMENT
+        // DELETE APPOINTMENT (SECURE FOR PATIENTS)
         // ----------------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize("Admin", "Clinician")]
+        [RoleAuthorize("Admin", "Clinician", "Patient")]
         public async Task<IActionResult> Delete(int id)
         {
-            var appt = await _context.Appointments.FindAsync(id);
+            var userId = HttpContext.Session.GetInt32(SessionKeys.UserId);
+            var role = HttpContext.Session.GetString(SessionKeys.UserRole);
 
+            var appt = await _context.Appointments.FindAsync(id);
             if (appt == null)
                 return NotFound();
+
+            // PATIENT SECURITY CHECK
+            if (role == "Patient")
+            {
+                var patient = await _context.Patients.FirstAsync(p => p.UserId == userId);
+
+                if (appt.PatientId != patient.PatientId)
+                    return Unauthorized();
+            }
 
             _context.Appointments.Remove(appt);
             await _context.SaveChangesAsync();
