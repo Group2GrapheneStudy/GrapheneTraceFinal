@@ -17,11 +17,11 @@ namespace GrapheneTrace.Data
         private static readonly string CsvSourceFolder =
 
             @"C:\Users\tomas\source\repos\Group2GrapheneStudy\GrapheneTraceFinal\csv_files";
-            //@"C:\Users\faiza\Downloads\GTLB-Data (1)\GTLB-Data";
+  
 
         /// <summary>
         /// Entry point used from Program.cs:
-        ///     await SeedData.InitializeAsync(app.Services);
+        /// await SeedData.InitializeAsync(app.Services);
         /// </summary>
         public static Task InitializeAsync(IServiceProvider services)
         {
@@ -154,7 +154,7 @@ namespace GrapheneTrace.Data
         }
 
         // -----------------------------
-        // CSV → DATAFILES / FRAMES
+        // CSV - DATAFILES / FRAMES
         // -----------------------------
         private static void SeedCsvSessions(AppDbContext context)
         {
@@ -162,7 +162,7 @@ namespace GrapheneTrace.Data
             if (context.DataFiles.Any())
                 return;
 
-            // If the folder doesn't exist on this machine, just skip gracefully
+            // If the folder doesn't exist on this machine, just skip 
             if (!Directory.Exists(CsvSourceFolder))
                 return;
 
@@ -173,7 +173,7 @@ namespace GrapheneTrace.Data
             if (!patients.Any())
                 return;
 
-            // Use admin as "uploader"
+            // Use admin as uploader
             var adminUserId = context.Admins
                 .Select(a => a.UserId)
                 .FirstOrDefault();
@@ -181,7 +181,8 @@ namespace GrapheneTrace.Data
             if (adminUserId == 0)
                 return;
 
-            // Simple analysis helpers inline (similar to PressureAnalysisService)
+            // Simple analysis
+            // Returns the maximum value (peak pressure)
             decimal CalcPeak(int[,] matrix)
             {
                 int max = 0;
@@ -189,33 +190,52 @@ namespace GrapheneTrace.Data
                     if (v > max) max = v;
                 return max;
             }
-
+            // Returns the average
             decimal CalcAvg(int[,] matrix)
             {
-                long total = 0;
+                long total = 0; // long to avoid overflow
                 int count = 0;
+
+                // Sum all values and count how many entries we have
                 foreach (var v in matrix)
                 {
                     total += v;
                     count++;
                 }
+
+                // Protect against division by zero
                 return count == 0 ? 0 : (decimal)total / count;
             }
+
+            /// <summary>
+            /// Calculates the percentage of cells whose value is at or above
+            /// a given threshold. Returns a percentage in the range 0, 100
+            /// </summary>
 
             decimal CalcArea(int[,] matrix, int threshold = 10)
             {
                 int active = 0;
                 int total = matrix.Length;
+
+                // Count how many cells are active
                 foreach (var v in matrix)
                     if (v >= threshold) active++;
                 return total == 0 ? 0 : (decimal)active / total * 100m;
             }
+
+            /// <summary>
+            /// Combines peak pressure and contact area into a risk score:
+            ///  Peak contributes 60% scaled from 0–255
+            ///  Area contributes 40% scaled from 0–100%
+            /// The result is rounded to 2 decimal places
+            /// </summary>
 
             decimal CalcRisk(decimal peak, decimal area)
             {
                 return Math.Round((peak / 255m) * 60m + (area / 100m) * 40m, 2);
             }
 
+            // Find all CSV files in the data folder
             var csvFiles = Directory.GetFiles(CsvSourceFolder, "*.csv");
             if (csvFiles.Length == 0)
                 return;
@@ -225,6 +245,7 @@ namespace GrapheneTrace.Data
 
             foreach (var csvPath in csvFiles)
             {
+                // Assign files round-robin across available patients
                 var patient = patients[patientIndex % patients.Count];
                 patientIndex++;
 
@@ -233,40 +254,46 @@ namespace GrapheneTrace.Data
                     PatientId = patient.PatientId,
                     UploadedByUserId = adminUserId,
                     UploadedAt = now,
-                    FilePath = csvPath // reading directly from your folder
+                    FilePath = csvPath // Store absolute path
                 };
 
                 context.DataFiles.Add(dataFile);
                 context.SaveChanges(); // ensures DataFileId is generated
 
-                // Parse CSV into frames
+                // Parse CSV into 32x32 frames
                 var lines = File.ReadAllLines(csvPath);
 
+                // Ensure the file has a size that is a multiple of 32 lines
                 if (lines.Length % 32 != 0)
-                    continue; // skip weird files; better than crashing
+                    continue; // skip weird CSVs
 
                 int frameCount = lines.Length / 32;
-                var baseTime = now;
+                var baseTime = now; // All frames in this file are relative to this timestamp
 
                 for (int i = 0; i < frameCount; i++)
                 {
+                    // Build a 32x32 matrix for the current frame
                     int[,] matrix = new int[32, 32];
                     int startRow = i * 32;
 
                     for (int r = 0; r < 32; r++)
                     {
+                        // Split the CSV row into 32 integer values
                         var cells = lines[startRow + r]
                             .Split(',', StringSplitOptions.RemoveEmptyEntries);
 
+                        // Map each CSV value into the matrix cell
                         for (int c = 0; c < 32; c++)
                             matrix[r, c] = int.Parse(cells[c]);
                     }
 
+                    // metrics for this frame
                     var peak = CalcPeak(matrix);
                     var avg = CalcAvg(matrix);
                     var area = CalcArea(matrix);
                     var risk = CalcRisk(peak, area);
 
+                    // Persist the frame with its calculated metrics
                     context.PressureFrames.Add(new PressureFrame
                     {
                         DataFileId = dataFile.DataFileId,

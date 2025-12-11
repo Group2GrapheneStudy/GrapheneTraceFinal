@@ -21,7 +21,7 @@ namespace GrapheneTrace.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // 1. Make sure the user is logged in
+            // Make sure the user is logged in
             var userId = HttpContext.Session.GetInt32(SessionKeys.UserId);
             if (userId == null)
             {
@@ -29,7 +29,7 @@ namespace GrapheneTrace.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // 2. Load the patient linked to this user
+            // Load the patient linked to this user
             var patient = await _context.Patients
                 .Include(p => p.UserAccount)
                 .FirstOrDefaultAsync(p => p.UserId == userId.Value);
@@ -53,23 +53,23 @@ namespace GrapheneTrace.Controllers
 
             try
             {
-                // 3. Total alerts for this patient
+                // Total alerts for this patient
                 alertCount = await _context.Alerts
                     .Where(a => a.PatientId == patient.PatientId)
                     .CountAsync();
 
-                // 4. Only non-resolved alerts (Status may be null, so make it null-safe)
+                // Only non-resolved alerts (Status may be null, so make it null-safe)
                 openAlertCount = await _context.Alerts
                     .Where(a => a.PatientId == patient.PatientId &&
                                 (a.Status ?? string.Empty) != "Resolved")
                     .CountAsync();
 
-                // 5. Feedback count
+                // Feedback count
                 feedbackCount = await _context.Feedbacks
                     .Where(f => f.PatientId == patient.PatientId)
                     .CountAsync();
 
-                // 6. Upcoming appointments
+                // Upcoming appointments
                 var upcomingAppointments = await _context.Appointments
                     .Where(a => a.PatientId == patient.PatientId && a.StartTime > now)
                     .OrderBy(a => a.StartTime)
@@ -84,11 +84,10 @@ namespace GrapheneTrace.Controllers
             }
             catch (Exception)
             {
-                // In a uni project we usually just fail silently here so the page still loads.
-                // If you want, you can add logging here later.
+         
             }
 
-            // 8. Build the view model (UserAccount might be null, so use null-safe access)
+            // Build the view model 
             var vm = new PatientDashboardViewModel
             {
                 PatientName = patient.UserAccount?.Email ?? "Patient",

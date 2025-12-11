@@ -20,12 +20,8 @@ namespace GrapheneTrace.Services
         /// <summary>
         /// Returns a list of pressure trend points for the given patient.
         /// This uses ONLY real PressureFrame data that came from the CSVs.
-        ///
-        /// We:
-        ///  1. Get the patient's DataFiles.
-        ///  2. Take up to the latest 2000 PressureFrames for those files.
-        ///  3. Downsample to at most 'maxPoints' frames by picking evenly
-        ///     spaced frames in time order (no averaging, no synthetic values).
+        /// Get the patient's DataFiles.
+        /// spaced frames in time order
         /// </summary>
         public async Task<List<TrendPoint>> GetPatientTrendAsync(int patientId, int maxPoints = 24)
         {
@@ -33,7 +29,7 @@ namespace GrapheneTrace.Services
 
             try
             {
-                // 1) All data files for this patient
+                // All data files for this patient
                 var dataFileIds = await _context.DataFiles
                     .Where(d => d.PatientId == patientId)
                     .Select(d => d.DataFileId)
@@ -42,33 +38,34 @@ namespace GrapheneTrace.Services
                 if (!dataFileIds.Any())
                     return result;
 
-                // 2) Latest frames for those files, ordered by actual capture time
-                //    Limit total rows to avoid timeouts on very large datasets.
+                // Latest frames for those files, ordered by actual capture time
                 var frames = await _context.PressureFrames
                     .AsNoTracking()
                     .Where(f => dataFileIds.Contains(f.DataFileId))
                     .OrderByDescending(f => f.CapturedAtUtc)
-                    //.Take(2000)
                     .OrderBy(f => f.CapturedAtUtc) // re-order ascending after Take
                     .ToListAsync();
 
                 if (!frames.Any())
                     return result;
 
-                // 3) Downsample to at most maxPoints frames by picking evenly spaced indices.
-                //    We KEEP real timestamps and values – no averaging, no fake time.
+                // List that will hold the reduced set of frames
                 List<PressureFrame> selectedFrames = new List<PressureFrame>();
 
+                // If the total number of frames is already within the limit, keep them all
                 if (frames.Count <= maxPoints)
                 {
                     selectedFrames = frames;
                 }
                 else
                 {
+                    // Calculate step size to evenly sample frames across the full range
                     double step = (frames.Count - 1) / (double)(maxPoints - 1);
 
+                    // Select frames at evenly spaced intervals
                     for (int i = 0; i < maxPoints; i++)
                     {
+                        // Clamp index to valid range
                         int index = (int)Math.Round(i * step);
                         if (index < 0) index = 0;
                         if (index >= frames.Count) index = frames.Count - 1;
@@ -77,7 +74,7 @@ namespace GrapheneTrace.Services
                     }
                 }
 
-                // 4) Map selected frames into TrendPoint objects.
+                // Map selected frames into TrendPoint objects.
                 foreach (var f in selectedFrames)
                 {
                     result.Add(new TrendPoint
@@ -90,7 +87,7 @@ namespace GrapheneTrace.Services
             }
             catch (Exception)
             {
-                // Fail gracefully – empty list → "Not enough data" in the view.
+                // Fail – empty list → "Not enough data" in the view.
                 return new List<TrendPoint>();
             }
 

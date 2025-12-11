@@ -54,27 +54,32 @@ namespace GrapheneTrace.Controllers
         // -------------------------
         public async Task<IActionResult> Heatmap()
         {
+            // Get logged-in user's ID from session
             var userId = HttpContext.Session.GetInt32(SessionKeys.UserId);
             if (userId == null)
                 return RedirectToAction("Login", "Account");
 
+            // Load patient associated with this user account
             var patient = await _context.Patients
                 .FirstOrDefaultAsync(p => p.UserId == userId.Value);
 
             if (patient == null)
                 return RedirectToAction("Login", "Account");
 
+            // Get latest uploaded data file for this patient
             var latestFile = await _context.DataFiles
                 .Where(df => df.PatientId == patient.PatientId)
                 .OrderByDescending(df => df.UploadedAt)
                 .FirstOrDefaultAsync();
 
+            // Prepare the view model
             var vm = new HeatmapPlayerVm
             {
                 PatientId = patient.PatientId,
                 Frames = new List<HeatmapFrameVm>()
             };
 
+            // If a file exists, load all heatmap frames for it
             if (latestFile != null)
             {
                 vm.Frames = await _context.PressureFrames
@@ -92,18 +97,27 @@ namespace GrapheneTrace.Controllers
             return View(vm);
         }
 
+        // Represents a single heatmap frame displayed in the viewer
         public class HeatmapFrameVm
         {
+            // Unique ID of the frame record
             public int FrameId { get; set; }
+
+            // Index of the frame within the sequence
             public int FrameIndex { get; set; }
+
+            // Timestamp when the frame was captured
             public DateTime CapturedAtUtc { get; set; }
         }
 
+        // View model for the full heatmap player
         public class HeatmapPlayerVm
         {
+            // ID of the patient whose frames are being viewed
             public int PatientId { get; set; }
+
+            // List of frames available for playback
             public List<HeatmapFrameVm> Frames { get; set; } = new();
         }
-
     }
 }

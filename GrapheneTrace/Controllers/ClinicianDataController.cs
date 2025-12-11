@@ -65,9 +65,11 @@ namespace GrapheneTrace.Controllers
                 .Include(p => p.UserAccount)
                 .FirstOrDefaultAsync(p => p.PatientId == patientId);
 
+            // If the patient does not exist
             if (patient == null)
                 return NotFound();
 
+            // Fetch the most recent heatmap associated with this patient
             var heatmap = await _heatmaps.GetLatestHeatmapAsync(patient.PatientId);
 
             ViewBag.PatientEmail = patient.UserAccount.Email;
