@@ -3,8 +3,9 @@
 @inject IHttpContextAccessor Http
 
 @{
-    var role = Http.HttpContext?.Session.GetString(SessionKeys.UserRole);
-    var email = Http.HttpContext?.Session.GetString(SessionKeys.UserEmail);
+	var httpContext = Http?.HttpContext;
+    var role = Http.HttpContext?.Session?.GetString(SessionKeys.UserRole);
+    var email = Http.HttpContext?.Session?.GetString(SessionKeys.UserEmail);
     int prescriptionCount = 0;
 
     // Only check prescriptions for patients

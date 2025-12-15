@@ -57,6 +57,8 @@ namespace GrapheneTrace.Controllers
             }
             catch (Exception ex)
             {
+				// Loggin Error (Can be replaced with ILogger later)
+				Console.WriteLine(ex);
                 // Avoid crashing the app if the DB schema is out of sync
                 TempData["ErrorMessage"] =
                     "There was a problem loading your alerts. Please contact the system administrator.";
@@ -88,6 +90,7 @@ namespace GrapheneTrace.Controllers
             }
             catch (Exception ex)
             {
+				Console.WriteLine(ex);
                 TempData["ErrorMessage"] =
                     "There was a problem loading alerts. Please contact the system administrator.";
                 // Optional: log ex
@@ -129,8 +132,9 @@ namespace GrapheneTrace.Controllers
 
                 await _context.SaveChangesAsync();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+				Console.WriteLine(ex);
                 TempData["ErrorMessage"] =
                     "There was a problem resolving the alert. Please contact the system administrator.";
             }

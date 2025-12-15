@@ -98,8 +98,8 @@ namespace GrapheneTrace.Controllers
                 await csvFile.CopyToAsync(stream);
             }
 
-            // Get the ID of the user
-            var uploaderId = HttpContext.Session.GetInt32(SessionKeys.UserId) ?? 0;
+            // Session is required here; fail fast if user is not authenticated
+            var uploaderId = HttpContext.Session.GetInt32(SessionKeys.UserId) ?? throw new UnauthorizedAccessException("User session expired.");
 
 
             // Create a record

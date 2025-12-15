@@ -51,6 +51,7 @@ namespace GrapheneTrace.Controllers
             }
             catch (Exception ex)
             {
+				Console.WriteLine(ex);
                 // In a real app you would log this somewhere (AuditLogs, file, etc.)
                 TempData["Error"] = "Something went wrong while loading your feedback.";
                 return RedirectToAction("Index", "Patient");
